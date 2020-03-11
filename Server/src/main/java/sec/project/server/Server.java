@@ -2,7 +2,11 @@ package sec.project.server;
 
 import sec.project.library.ClientAPI;
 
+import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 
 /**
  * Hello world!
@@ -10,10 +14,6 @@ import java.rmi.RemoteException;
  */
 public class Server implements ClientAPI
 {
-    public static void main( String[] args )
-    {
-        System.out.println( "Hello World!" );
-    }
 
     @Override
     public void register() throws RemoteException {
