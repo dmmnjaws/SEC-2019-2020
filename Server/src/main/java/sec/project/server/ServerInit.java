@@ -23,8 +23,8 @@ public class ServerInit {
 
             Server server = new Server();
             ClientAPI stub = (ClientAPI) UnicastRemoteObject.exportObject(server, server_port);
-            Registry registry = LocateRegistry.getRegistry();
-            registry.bind("ClientAPI", stub);
+            Registry registry = LocateRegistry.createRegistry(server_port);
+            registry.rebind("localhost:" + String.valueOf(server_port) + "/ClientAPI", stub);
             System.err.println( "Server ready." );
 
         } catch(Exception e) {

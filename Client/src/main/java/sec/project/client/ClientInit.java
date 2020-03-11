@@ -24,9 +24,9 @@ public class ClientInit {
         try {
 
             Registry registry = LocateRegistry.getRegistry(server_port);
-            ClientAPI stub = (ClientAPI) registry.lookup("ClientAPI");
+            ClientAPI stub = (ClientAPI) registry.lookup("localhost:" + String.valueOf(server_port) + "/ClientAPI");
             stub.register();
-            System.err.println( "Server ready." );
+            System.err.println( "Client ready." );
 
         } catch (Exception e) {
 
