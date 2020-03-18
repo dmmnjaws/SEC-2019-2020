@@ -12,9 +12,9 @@ import java.security.*;
  */
 public class ClientInit {
 
-    public static void main( String[] args )
-    {
+    public static void main( String[] args ) {
 
+        System.out.println( "Hello World!" );
         ClientInit clientInit = new ClientInit(7654);
 
         while(true){
@@ -23,8 +23,6 @@ public class ClientInit {
     }
 
     public ClientInit(int server_port){
-
-        System.out.println( "Hello World!" );
 
         try {
 

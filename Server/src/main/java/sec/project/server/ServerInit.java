@@ -9,11 +9,10 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class ServerInit {
 
-    public static void main( String[] args )
-    {
+    public static void main( String[] args ) {
 
-        ServerInit server = new ServerInit(7654);
         System.out.println( "Hello World!" );
+        ServerInit server = new ServerInit(7654);
 
         while(true){
         }
