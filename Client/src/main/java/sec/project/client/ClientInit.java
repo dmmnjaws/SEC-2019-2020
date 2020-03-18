@@ -4,6 +4,7 @@ import sec.project.library.ClientAPI;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.security.*;
 
 /**
  * Hello world!
@@ -14,8 +15,11 @@ public class ClientInit {
     public static void main( String[] args )
     {
 
-        ClientInit client = new ClientInit(7654);
+        ClientInit clientInit = new ClientInit(7654);
         System.out.println( "Hello World!" );
+
+        while(true){
+        }
 
     }
 
@@ -25,7 +29,8 @@ public class ClientInit {
 
             Registry registry = LocateRegistry.getRegistry(server_port);
             ClientAPI stub = (ClientAPI) registry.lookup("localhost:" + String.valueOf(server_port) + "/ClientAPI");
-            stub.register();
+            Client client = new Client(stub);
+            client.execute();
             System.err.println( "Client ready." );
 
         } catch (Exception e) {

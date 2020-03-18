@@ -15,6 +15,9 @@ public class ServerInit {
         ServerInit server = new ServerInit(7654);
         System.out.println( "Hello World!" );
 
+        while(true){
+        }
+
     }
 
     public ServerInit(int server_port){
