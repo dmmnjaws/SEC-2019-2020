@@ -25,7 +25,7 @@ public class Client {
             this.keyPair = keyGen.generateKeyPair();
             this.clientPrivateKey = keyPair.getPrivate();
             this.clientPublicKey = keyPair.getPublic();
-            this.serverPublicKey = getPublicKey("Client/src/main/resources/public_key.der");
+            this.serverPublicKey = getPublicKey("Client/data/keys/server_public_key.der");
             System.out.println(serverPublicKey.toString());
 
         } catch (Exception e) {

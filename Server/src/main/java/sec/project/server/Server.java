@@ -24,9 +24,9 @@ public class Server implements ClientAPI {
 
         try {
 
-            serverPrivateKey = getPrivateKey("Server/src/main/resources/private_key.der");
+            serverPrivateKey = getPrivateKey("Server/data/keys/server_private_key.der");
             System.out.println(serverPrivateKey.toString());
-            serverPublicKey = getPublicKey("Server/src/main/resources/public_key.der");
+            serverPublicKey = getPublicKey("Server/data/keys/server_public_key.der");
             System.out.println(serverPublicKey.toString());
 
         } catch (Exception e) {
