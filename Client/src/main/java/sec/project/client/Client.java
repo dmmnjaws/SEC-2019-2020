@@ -1,5 +1,6 @@
 package sec.project.client;
 
+import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
 
 import java.nio.file.Files;
@@ -21,11 +22,11 @@ public class Client {
 
         try {
 
-            this.keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
+            this.keyGen = KeyPairGenerator.getInstance("RSA", "SunRsaSign");
             this.keyPair = keyGen.generateKeyPair();
             this.clientPrivateKey = keyPair.getPrivate();
             this.clientPublicKey = keyPair.getPublic();
-            this.serverPublicKey = getPublicKey("Client/data/keys/server_public_key.der");
+            this.serverPublicKey = getPublicKey("data/keys/server_public_key.der");
             System.out.println(serverPublicKey.toString());
 
         } catch (Exception e) {
@@ -38,6 +39,18 @@ public class Client {
     }
 
     public void execute() {
+        /*
+        String test = "ola";
+        try{
+            AsymmetricCrypto crypt = new AsymmetricCrypto();
+            String secret = crypt.encryptText(test,this.clientPrivateKey);
+            System.out.println(secret);
+            String voila = crypt.decryptText(secret,this.clientPublicKey);
+            System.out.println(voila);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        */
 
         try{
             Scanner scanner = new Scanner(System.in);
