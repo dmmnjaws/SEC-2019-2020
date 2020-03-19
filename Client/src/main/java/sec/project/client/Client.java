@@ -11,22 +11,24 @@ import java.util.Scanner;
 
 public class Client {
 
-    private KeyPairGenerator keyGen;
-    private KeyPair keyPair;
     private PrivateKey clientPrivateKey;
     private PublicKey clientPublicKey;
     private PublicKey serverPublicKey;
     ClientAPI stub;
+    Scanner scanner;
+    String clientNumber;
 
     public Client (ClientAPI stub) {
 
+        this.scanner = new Scanner(System.in);
+        System.out.println("Insert the client number:");
+        this.clientNumber = scanner.nextLine();
+
         try {
 
-            this.keyGen = KeyPairGenerator.getInstance("RSA", "SunRsaSign");
-            this.keyPair = keyGen.generateKeyPair();
-            this.clientPrivateKey = keyPair.getPrivate();
-            this.clientPublicKey = keyPair.getPublic();
-            this.serverPublicKey = getPublicKey("data/keys/server_public_key.der");
+            this.clientPrivateKey = AsymmetricCrypto.getPrivateKey("data/keys/client" + clientNumber + "_private_key.der");
+            this.clientPublicKey = AsymmetricCrypto.getPublicKey("data/keys/client" + clientNumber + "_public_key.der");
+            this.serverPublicKey = AsymmetricCrypto.getPublicKey("data/keys/server_public_key.der");
             System.out.println(serverPublicKey.toString());
 
         } catch (Exception e) {
@@ -39,21 +41,19 @@ public class Client {
     }
 
     public void execute() {
-        /*
+/*
         String test = "ola";
         try{
-            AsymmetricCrypto crypt = new AsymmetricCrypto();
-            String secret = crypt.encryptText(test,this.clientPrivateKey);
+            String secret = AsymmetricCrypto.encryptText(test,this.clientPrivateKey);
             System.out.println(secret);
-            String voila = crypt.decryptText(secret,this.clientPublicKey);
+            String voila = AsymmetricCrypto.decryptText(secret,this.clientPublicKey);
             System.out.println(voila);
         }catch (Exception e){
             e.printStackTrace();
         }
-        */
-
+*/
         try{
-            Scanner scanner = new Scanner(System.in);
+
             while(true){
 
                 String command = scanner.nextLine();

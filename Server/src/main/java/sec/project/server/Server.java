@@ -1,5 +1,6 @@
 package sec.project.server;
 
+import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
 
 import java.nio.file.Files;
@@ -24,9 +25,9 @@ public class Server implements ClientAPI {
 
         try {
 
-            serverPrivateKey = getPrivateKey("data/keys/server_private_key.der");
+            serverPrivateKey = AsymmetricCrypto.getPrivateKey("data/keys/server_private_key.der");
             System.out.println(serverPrivateKey.toString());
-            serverPublicKey = getPublicKey("data/keys/server_public_key.der");
+            serverPublicKey = AsymmetricCrypto.getPublicKey("data/keys/server_public_key.der");
             System.out.println(serverPublicKey.toString());
 
         } catch (Exception e) {
@@ -71,22 +72,4 @@ public class Server implements ClientAPI {
 
     }
 
-    public static PrivateKey getPrivateKey(String filename) throws Exception {
-
-        byte[] keyBytes = Files.readAllBytes(Paths.get(filename));
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-
-        return kf.generatePrivate(spec);
-
-    }
-
-    public static PublicKey getPublicKey(String filename) throws Exception {
-
-        byte[] keyBytes = Files.readAllBytes(Paths.get(filename));
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-
-        return kf.generatePublic(spec);
-    }
 }
