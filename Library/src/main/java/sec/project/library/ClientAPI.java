@@ -9,6 +9,6 @@ public interface ClientAPI extends Remote {
     void register(PublicKey clientPublicKey) throws RemoteException;
     void post(PublicKey clientPublicKey, String message) throws RemoteException;
     void postGeneral(PublicKey clientPublicKey, String message) throws RemoteException;
-    void read(PublicKey clientPublicKey, int number) throws RemoteException;
-    void readGeneral(int number) throws RemoteException;
+    String read(PublicKey clientPublicKey, int number) throws RemoteException;
+    String readGeneral(int number) throws RemoteException;
 }
