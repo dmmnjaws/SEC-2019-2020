@@ -64,7 +64,7 @@ public class Client {
 
                     case "register":
 
-                        stub.register(this.clientPublicKey);
+                        stub.register(this.clientPublicKey,command.substring(command.indexOf(" ") + 1, command.length()));
                         break;
 
                     case "post":

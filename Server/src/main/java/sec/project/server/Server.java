@@ -22,7 +22,7 @@ public class Server implements ClientAPI {
 
     // PublicKey - identifies the client
     // ArrayList<String> - his announcement board;
-    Dictionary<PublicKey, ArrayList<String>> clientBoards;
+    Dictionary<PublicKey, ClientLibrary> clientList;
     ArrayList<Pair<PublicKey, String>> generalBoard;
 
     public Server (){
@@ -43,17 +43,16 @@ public class Server implements ClientAPI {
             e.printStackTrace();
 
         }
-
-        this.clientBoards = new Hashtable<>();
+        this.clientList = new Hashtable<>();
         this.generalBoard = new ArrayList<>();
 
     }
 
     @Override
-    public void register(PublicKey clientPublicKey) throws RemoteException {
+    public void register(PublicKey clientPublicKey, String clientId) throws RemoteException {
 
         System.err.println( "Client called register() method." );
-        this.clientBoards.put(clientPublicKey, new ArrayList<String>());
+        this.clientList.put(clientPublicKey, new ClientLibrary(clientId));
 
     }
 
@@ -61,7 +60,7 @@ public class Server implements ClientAPI {
     public void post(PublicKey clientPublicKey, String message) throws RemoteException {
 
         System.err.println( "Client called post() method." );
-        this.clientBoards.get(clientPublicKey).add(message);
+        this.clientList.get(clientPublicKey).addAnnouncement(message);
 
     }
 
@@ -78,15 +77,7 @@ public class Server implements ClientAPI {
 
         System.err.println( "Client called read() method." );
 
-        ArrayList<String> clientBoard = this.clientBoards.get(clientPublicKey);
-
-        if (number >= clientBoard.size() || number == 0){
-            return clientBoard.toString();
-
-        } else {
-            return clientBoard.subList(clientBoard.size() - number,clientBoard.size()).toString();
-
-        }
+        return clientList.get(clientPublicKey).getAnnouncements(number);
     }
 
     // este metodo envia tambem a chave publica e imprime isso, portanto se aparecer, nao pensem que é um erro. Depois temos de arranjar uma solução melhor.
