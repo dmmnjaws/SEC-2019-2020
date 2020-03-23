@@ -3,10 +3,7 @@ package sec.project.client;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.*;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Scanner;
 
 public class Client {
@@ -17,18 +14,21 @@ public class Client {
     ClientAPI stub;
     Scanner scanner;
     String clientNumber;
+    String serverNumber;
 
     public Client (ClientAPI stub) {
 
         this.scanner = new Scanner(System.in);
         System.out.println("Insert the client number:");
         this.clientNumber = scanner.nextLine();
+        System.out.println("Insert the server number you want to connect to:");
+        this.serverNumber = scanner.nextLine();
 
         try {
 
             this.clientPrivateKey = AsymmetricCrypto.getPrivateKey("data/keys/client" + clientNumber + "_private_key.der");
             this.clientPublicKey = AsymmetricCrypto.getPublicKey("data/keys/client" + clientNumber + "_public_key.der");
-            this.serverPublicKey = AsymmetricCrypto.getPublicKey("data/keys/server_public_key.der");
+            this.serverPublicKey = AsymmetricCrypto.getPublicKey("data/keys/server" + serverNumber + "_public_key.der");
             System.out.println(serverPublicKey.toString());
 
         } catch (Exception e) {
@@ -69,8 +69,8 @@ public class Client {
 
                     case "post":
 
-                        message = command.substring(command.indexOf("(") + 1);
-                        message = message.substring(0, message.indexOf(")"));
+                        message = command.substring(command.indexOf(" ") + 1, command.length());
+
                         if(message.length() < 255) {
                             stub.post(this.clientPublicKey, message);
                         }
@@ -81,8 +81,8 @@ public class Client {
 
                     case "postGeneral":
 
-                        message = command.substring(command.indexOf("(") + 1);
-                        message = message.substring(0, message.indexOf(")"));
+                        message = command.substring(command.indexOf(" ") + 1, command.length());
+
                         if(message.length() < 255) {
                             stub.postGeneral(this.clientPublicKey, message);
                         }
@@ -93,12 +93,12 @@ public class Client {
 
                     case "read":
 
-                        stub.read(this.clientPublicKey, Integer.parseInt(tokens[1]));
+                        System.out.println(stub.read(this.clientPublicKey, Integer.parseInt(tokens[1])));
                         break;
 
                     case "readGeneral":
 
-                        stub.readGeneral(Integer.parseInt(tokens[1]));
+                        System.out.println(stub.readGeneral(Integer.parseInt(tokens[1])));
                         break;
 
                 }
@@ -107,14 +107,5 @@ public class Client {
         } catch ( Exception e ){
             e.printStackTrace();
         }
-    }
-
-    public static PublicKey getPublicKey(String filename) throws Exception {
-
-        byte[] keyBytes = Files.readAllBytes(Paths.get(filename));
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-
-        return kf.generatePublic(spec);
     }
 }

@@ -17,7 +17,7 @@ import javax.crypto.NoSuchPaddingException;
 
 public class AsymmetricCrypto {
 
-    public static String encryptText(String msg, PrivateKey key) throws NoSuchAlgorithmException, NoSuchPaddingException,
+    public static String encryptText(String msg, Key key) throws NoSuchAlgorithmException, NoSuchPaddingException,
             UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
 
         Cipher cipher = Cipher.getInstance("RSA");
@@ -26,13 +26,27 @@ public class AsymmetricCrypto {
 
     }
 
-    public static String decryptText(String msg, PublicKey key) throws InvalidKeyException, UnsupportedEncodingException,
+    public static String decryptText(String msg, Key key) throws InvalidKeyException, UnsupportedEncodingException,
             IllegalBlockSizeException, BadPaddingException, NoSuchPaddingException, NoSuchAlgorithmException {
 
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, key);
         return new String(cipher.doFinal(Base64.decode(msg)), "UTF-8");
     }
+
+    /*
+    public static String prepareToSend(String msg, PrivateKey clientPrivateKey, PublicKey serverPublicKey) {
+
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            messageDigest.update(msg.getBytes("UTF-8"));
+            String digestedMessage = messageDigest.digest().toString();
+            String secureMessage = encryptText(encryptText(digestedMessage, clientPrivateKey), serverPublicKey);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+     */
 
     public static PrivateKey getPrivateKey(String filename) throws Exception {
 
