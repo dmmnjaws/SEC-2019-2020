@@ -65,22 +65,21 @@ public class Server implements ClientAPI {
     @Override
     public void post(PublicKey clientPublicKey, String message, byte [] signature) throws RemoteException {
 
-        try{
+        try {
             System.out.println("\n-------------------------------------------------------------\n" +
                     "client" + clientList.get(clientPublicKey).getClientNumber() + " called post() method.");
+
+            if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, message)) {
+                this.clientList.get(clientPublicKey).addAnnouncement(message);
+            } else {
+                throw new Exception("\nInvalid signature.");
+            }
 
         } catch (NullPointerException e) {
             System.out.println("\nClient is not registered!");
             throw new RemoteException("\nClient not registered!");
-        }
 
-        try{
-            if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,message)){
-                this.clientList.get(clientPublicKey).addAnnouncement(message);
-            }else{
-                throw new Exception("\nInvalid signature.");
-            }
-        }catch (Exception e){
+        } catch (Exception e){
             //TO DO -> restrict exception catching
             e.printStackTrace();
             throw new RemoteException();
@@ -95,18 +94,17 @@ public class Server implements ClientAPI {
             System.out.println("\n-------------------------------------------------------------\n" +
                     "client" + clientList.get(clientPublicKey).getClientNumber() + " called postGeneral() method.");
 
-        } catch (NullPointerException e) {
-            System.out.println("\nClient is not registered!");
-            throw new RemoteException("Client not registered!");
-        }
-
-        try{
             if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,message)){
                 this.generalBoard.addAnnouncement(clientList.get(clientPublicKey).getClientNumber(), message);
             }else{
                 throw new Exception("\nInvalid signature.");
             }
-        }catch (Exception e){
+
+        } catch (NullPointerException e) {
+            System.out.println("\nClient is not registered!");
+            throw new RemoteException("Client not registered!");
+
+        } catch (Exception e){
             //TO DO -> restrict exception catching
             e.printStackTrace();
             throw new RemoteException();
@@ -120,13 +118,13 @@ public class Server implements ClientAPI {
         try{
             System.out.println("\n-------------------------------------------------------------\n" +
                     "A client called the read() method to read client" + clientList.get(clientPublicKey).getClientNumber() + "'s announcements.");
+            return clientList.get(clientPublicKey).getAnnouncements(number);
 
         } catch (NullPointerException e) {
             System.out.println("\nClient is not registered!");
             throw new RemoteException("\nClient not registered!");
         }
 
-        return clientList.get(clientPublicKey).getAnnouncements(number);
     }
 
     // este metodo envia tambem a chave publica e imprime isso, portanto se aparecer, nao pensem que é um erro. Depois temos de arranjar uma solução melhor.

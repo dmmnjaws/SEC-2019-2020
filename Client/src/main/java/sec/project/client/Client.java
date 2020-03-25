@@ -98,11 +98,14 @@ public class Client {
                         break;
 
                     case "read":
+                        
+                        System.out.println("\nWrite the number of the client whose announcement board you want to read:");
+                        PublicKey toReadClientPublicKey = AsymmetricCrypto.getPublicKey("data/keys/client" + scanner.nextLine() + "_public_key.der");
 
                         System.out.println("\nHow many announcements do you want to see?");
                         numberOfAnnouncements = scanner.nextLine();
 
-                        System.out.println(stub.read(this.clientPublicKey, Integer.parseInt(numberOfAnnouncements)));
+                        System.out.println(stub.read(toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements)));
                         break;
 
                     case "readGeneral":
