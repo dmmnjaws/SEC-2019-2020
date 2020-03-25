@@ -6,7 +6,7 @@ import java.security.PublicKey;
 
 public interface ClientAPI extends Remote {
 
-    void register(PublicKey clientPublicKey, String clientId) throws RemoteException;
+    void register(PublicKey clientPublicKey, String clientId, byte [] signature) throws RemoteException;
     void post(PublicKey clientPublicKey, String message) throws RemoteException;
     void postGeneral(PublicKey clientPublicKey, String message) throws RemoteException;
     String read(PublicKey clientPublicKey, int number) throws RemoteException;

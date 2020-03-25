@@ -17,18 +17,18 @@ public class ClientLibrary {
     }
 
     public String getAnnouncements(int number){
-        String printAnnouce = "";
+        String print = "";
 
         if(this.announcements.size() - number < 1) {
             for (int i = 0; i < announcements.size(); i++) {
-                printAnnouce += announcements.get(i).printAnnouncement();
+                print += announcements.get(i).printAnnouncement();
             }
         }else{
             for (int i = number; i < announcements.size(); i++) {
-                printAnnouce += announcements.get(i).printAnnouncement();
+                print += announcements.get(i).printAnnouncement();
             }
         }
 
-        return printAnnouce;
+        return print;
     }
 }

@@ -61,12 +61,12 @@ public class Client {
                 String message;
 
                 switch(tokens[0]){
-
                     case "register":
-
-                        stub.register(this.clientPublicKey,command.substring(command.indexOf(" ") + 1, command.length()));
+                        byte [] signature = AsymmetricCrypto.wrapDigitalSignature(this.clientNumber,this.clientPrivateKey);
+                        System.out.println(signature);
+                        stub.register(this.clientPublicKey,this.clientNumber,signature);
+                        System.out.println("Successful registration");
                         break;
-
                     case "post":
 
                         message = command.substring(command.indexOf(" ") + 1, command.length());

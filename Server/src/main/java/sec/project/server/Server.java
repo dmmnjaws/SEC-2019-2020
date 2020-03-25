@@ -49,11 +49,20 @@ public class Server implements ClientAPI {
     }
 
     @Override
-    public void register(PublicKey clientPublicKey, String clientId) throws RemoteException {
-
-        System.err.println( "Client called register() method." );
-        this.clientList.put(clientPublicKey, new ClientLibrary(clientId));
-
+    public void register(PublicKey clientPublicKey, String clientId, byte [] signature) throws RemoteException {
+        try{
+            System.out.println("Client called register() method.");
+            if(AsymmetricCrypto.validateDigitalSignature(signature,this.serverPublicKey,clientId)){
+                this.clientList.put(clientPublicKey, new ClientLibrary(clientId));
+                System.out.println("Registered " + clientId + " with Public key: \n" + clientPublicKey);
+            }else{
+                throw new Exception("Invalid signature");
+            }
+        }catch (Exception e){
+            //TO DO -> restrict exception catching
+            e.printStackTrace();
+            throw new RemoteException();
+        }
     }
 
     @Override

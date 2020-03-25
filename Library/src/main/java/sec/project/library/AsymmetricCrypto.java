@@ -34,6 +34,33 @@ public class AsymmetricCrypto {
         return new String(cipher.doFinal(Base64.decode(msg)), "UTF-8");
     }
 
+    public static byte [] wrapDigitalSignature(String msg, PrivateKey privateKey) throws
+            NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException,
+            IllegalBlockSizeException, UnsupportedEncodingException {
+
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.ENCRYPT_MODE, privateKey);
+        byte [] hash = digestMessage(msg);
+        return cipher.doFinal(hash);
+    }
+
+    public static boolean validateDigitalSignature(byte [] receivedHash, PublicKey publicKey, String msg) throws
+            NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException,
+            IllegalBlockSizeException, UnsupportedEncodingException {
+
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.DECRYPT_MODE, publicKey);
+        byte [] localHash = digestMessage(msg);
+
+        return localHash.equals(receivedHash);
+    }
+
+    public static byte[] digestMessage(String message) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+        byte[] messageBytes = message.getBytes("UTF-8");
+        return messageDigest.digest(messageBytes);
+    }
+
     /*
     public static String prepareToSend(String msg, PrivateKey clientPrivateKey, PublicKey serverPublicKey) {
 
