@@ -3,6 +3,7 @@ package sec.project.client;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
 
+import java.io.Console;
 import java.security.*;
 import java.util.Scanner;
 
@@ -41,52 +42,51 @@ public class Client {
     }
 
     public void execute() {
-/*
-        String test = "ola";
-        try{
-            String secret = AsymmetricCrypto.encryptText(test,this.clientPrivateKey);
-            System.out.println(secret);
-            String voila = AsymmetricCrypto.decryptText(secret,this.clientPublicKey);
-            System.out.println(voila);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-*/
-        try{
 
-            while(true){
+        while (true) {
 
-                String command = scanner.nextLine();
-                String[] tokens = command.split(" ");
-                String message;
+            String command = scanner.nextLine();
+            String[] tokens = command.split(" ");
+            String message;
+            byte[] signature;
 
-                switch(tokens[0]){
+            try {
+                switch (tokens[0]) {
                     case "register":
-                        byte [] signature = AsymmetricCrypto.wrapDigitalSignature(this.clientNumber,this.clientPrivateKey);
+
+                        signature = AsymmetricCrypto.wrapDigitalSignature(this.clientNumber, this.clientPrivateKey);
                         System.out.println(signature);
-                        stub.register(this.clientPublicKey,this.clientNumber,signature);
+                        stub.register(this.clientPublicKey, this.clientNumber, signature);
+
                         System.out.println("Successful registration");
                         break;
+
                     case "post":
 
-                        message = command.substring(command.indexOf(" ") + 1, command.length());
+                        System.out.println("Write your announcement:");
+                        message = System.console().readLine() + "|";
+                        if (message.length() > 255) {
+                            System.out.println("Message is too long! Failed post");
+                            break;
+                        }
 
-                        if(message.length() < 255) {
-                            stub.post(this.clientPublicKey, message);
-                        }
-                        else{
-                            System.out.println("The message can only have 255 chars");
-                        }
+                        System.out.println("Any references? Insert like id1 id2 id3. If none just press enter");
+                        message += System.console().readLine();
+
+                        signature = AsymmetricCrypto.wrapDigitalSignature(message, this.clientPrivateKey);
+                        System.out.println(signature);
+                        stub.post(this.clientPublicKey, message, signature);
+
+                        System.out.println("Successfully posted");
                         break;
 
                     case "postGeneral":
 
                         message = command.substring(command.indexOf(" ") + 1, command.length());
 
-                        if(message.length() < 255) {
+                        if (message.length() < 255) {
                             stub.postGeneral(this.clientPublicKey, message);
-                        }
-                        else{
+                        } else {
                             System.out.println("The message can only have 255 chars");
                         }
                         break;
@@ -102,10 +102,9 @@ public class Client {
                         break;
 
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-        } catch ( Exception e ){
-            e.printStackTrace();
         }
     }
 }

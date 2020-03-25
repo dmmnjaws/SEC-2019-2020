@@ -10,10 +10,13 @@ public class ClientLibrary {
     public ClientLibrary(String clientId){
         this.id = clientId;
         this.seqNumber = 1;
+        this.announcements = new ArrayList<>();
     }
 
     public void addAnnouncement(String message){
-        this.announcements.add(new Announcement(announcements.size() + 1, message));
+        Announcement announcement = new Announcement(announcements.size() + 1, message);
+        this.announcements.add(announcement);
+        System.out.println(announcement.printAnnouncement());
     }
 
     public String getAnnouncements(int number){

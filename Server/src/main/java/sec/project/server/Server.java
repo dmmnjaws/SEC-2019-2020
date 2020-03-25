@@ -66,10 +66,24 @@ public class Server implements ClientAPI {
     }
 
     @Override
-    public void post(PublicKey clientPublicKey, String message) throws RemoteException {
+    public void post(PublicKey clientPublicKey, String message, byte [] signature) throws RemoteException {
+        System.out.println("Client called post() method.");
 
-        System.err.println( "Client called post() method." );
-        this.clientList.get(clientPublicKey).addAnnouncement(message);
+        try{
+            clientList.get(clientPublicKey); // To verify if client is registered
+            if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,message)){
+                this.clientList.get(clientPublicKey).addAnnouncement(message);
+            }else{
+                throw new Exception("Invalid signature");
+            }
+        }catch (NullPointerException e){
+            System.out.println("Client is not registered!");
+            throw new RemoteException("Client not registered!");
+        }catch (Exception e){
+            //TO DO -> restrict exception catching
+            e.printStackTrace();
+            throw new RemoteException();
+        }
 
     }
 
