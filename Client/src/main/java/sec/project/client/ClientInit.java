@@ -14,7 +14,7 @@ public class ClientInit {
 
     public static void main( String[] args ) {
 
-        System.out.println( "Hello World!" );
+        System.out.println( "\nHello World!" );
         ClientInit clientInit = new ClientInit(7654);
 
         while(true){
@@ -29,12 +29,12 @@ public class ClientInit {
             Registry registry = LocateRegistry.getRegistry(server_port);
             ClientAPI stub = (ClientAPI) registry.lookup("localhost:" + String.valueOf(server_port) + "/ClientAPI");
             Client client = new Client(stub);
-            System.err.println( "Client ready." );
+            System.err.println( "\nClient ready." );
             client.execute();
 
         } catch (Exception e) {
 
-            System.err.println("Client exception: " + e.toString());
+            System.err.println("\nClient exception: " + e.toString());
             e.printStackTrace();
 
         }

@@ -11,7 +11,7 @@ public class ServerInit {
 
     public static void main( String[] args ) {
 
-        System.out.println( "Hello World!" );
+        System.out.println( "\nHello World!" );
         ServerInit server = new ServerInit(7654);
 
         while(true){
@@ -27,11 +27,11 @@ public class ServerInit {
             ClientAPI stub = (ClientAPI) UnicastRemoteObject.exportObject(server, server_port);
             Registry registry = LocateRegistry.createRegistry(server_port);
             registry.rebind("localhost:" + String.valueOf(server_port) + "/ClientAPI", stub);
-            System.err.println( "Server ready." );
+            System.err.println( "\nServer ready." );
 
         } catch(Exception e) {
 
-            System.err.println("Server exception: " + e.toString());
+            System.err.println("\nServer exception: " + e.toString());
             e.printStackTrace();
 
         }

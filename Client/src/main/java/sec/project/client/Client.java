@@ -12,17 +12,17 @@ public class Client {
     private PrivateKey clientPrivateKey;
     private PublicKey clientPublicKey;
     private PublicKey serverPublicKey;
-    ClientAPI stub;
-    Scanner scanner;
-    String clientNumber;
-    String serverNumber;
+    private ClientAPI stub;
+    private Scanner scanner;
+    private String clientNumber;
+    private String serverNumber;
 
     public Client (ClientAPI stub) {
 
         this.scanner = new Scanner(System.in);
-        System.out.println("Insert the client number:");
+        System.out.println("\nInsert the client number:");
         this.clientNumber = scanner.nextLine();
-        System.out.println("Insert the server number you want to connect to:");
+        System.out.println("\nInsert the server number you want to connect to:");
         this.serverNumber = scanner.nextLine();
 
         try {
@@ -30,7 +30,6 @@ public class Client {
             this.clientPrivateKey = AsymmetricCrypto.getPrivateKey("data/keys/client" + clientNumber + "_private_key.der");
             this.clientPublicKey = AsymmetricCrypto.getPublicKey("data/keys/client" + clientNumber + "_public_key.der");
             this.serverPublicKey = AsymmetricCrypto.getPublicKey("data/keys/server" + serverNumber + "_public_key.der");
-            System.out.println(serverPublicKey.toString());
 
         } catch (Exception e) {
 
@@ -45,9 +44,11 @@ public class Client {
 
         while (true) {
 
+            System.out.println("\n-------------------------------------------------------------\n" + "Write a command:");
             String command = scanner.nextLine();
             String[] tokens = command.split(" ");
             String message;
+            String numberOfAnnouncements;
             byte[] signature;
 
             try {
@@ -55,50 +56,61 @@ public class Client {
                     case "register":
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(this.clientNumber, this.clientPrivateKey);
-                        System.out.println(signature);
                         stub.register(this.clientPublicKey, this.clientNumber, signature);
 
-                        System.out.println("Successful registration");
+                        System.out.println("\nSuccessful registration.");
                         break;
 
                     case "post":
 
-                        System.out.println("Write your announcement:");
-                        message = System.console().readLine() + "|";
+                        System.out.println("\nWrite your announcement:");
+                        message = scanner.nextLine() + "| ";
                         if (message.length() > 255) {
-                            System.out.println("Message is too long! Failed post");
+                            System.out.println("\nMessage is too long! Failed post.");
                             break;
                         }
 
-                        System.out.println("Any references? Insert like id1 id2 id3. If none just press enter");
-                        message += System.console().readLine();
+                        System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
+                        message += scanner.nextLine();
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message, this.clientPrivateKey);
-                        System.out.println(signature);
                         stub.post(this.clientPublicKey, message, signature);
 
-                        System.out.println("Successfully posted");
+                        System.out.println("\nSuccessfully posted.");
                         break;
 
                     case "postGeneral":
 
-                        message = command.substring(command.indexOf(" ") + 1, command.length());
-
-                        if (message.length() < 255) {
-                            stub.postGeneral(this.clientPublicKey, message);
-                        } else {
-                            System.out.println("The message can only have 255 chars");
+                        System.out.println("\nWrite your announcement:");
+                        message = scanner.nextLine() + "| ";
+                        if (message.length() > 255) {
+                            System.out.println("\nMessage is too long! Failed post.");
+                            break;
                         }
+
+                        System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
+                        message += scanner.nextLine();
+
+                        signature = AsymmetricCrypto.wrapDigitalSignature(message, this.clientPrivateKey);
+                        stub.postGeneral(this.clientPublicKey, message, signature);
+
+                        System.out.println("\nSuccessfully posted.");
                         break;
 
                     case "read":
 
-                        System.out.println(stub.read(this.clientPublicKey, Integer.parseInt(tokens[1])));
+                        System.out.println("\nHow many announcements do you want to see?");
+                        numberOfAnnouncements = scanner.nextLine();
+
+                        System.out.println(stub.read(this.clientPublicKey, Integer.parseInt(numberOfAnnouncements)));
                         break;
 
                     case "readGeneral":
 
-                        System.out.println(stub.readGeneral(Integer.parseInt(tokens[1])));
+                        System.out.println("\nHow many announcements do you want to see?");
+                        numberOfAnnouncements = scanner.nextLine();
+
+                        System.out.println(stub.readGeneral(Integer.parseInt(numberOfAnnouncements)));
                         break;
 
                 }

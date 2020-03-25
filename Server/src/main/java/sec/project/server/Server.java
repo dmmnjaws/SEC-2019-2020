@@ -17,26 +17,21 @@ public class Server implements ClientAPI {
 
     private PrivateKey serverPrivateKey;
     private PublicKey serverPublicKey;
-    Scanner scanner;
-    String serverNumber;
-
-    // PublicKey - identifies the client
-    // ArrayList<String> - his announcement board;
-    Dictionary<PublicKey, ClientLibrary> clientList;
-    ArrayList<Pair<PublicKey, String>> generalBoard;
+    private Scanner scanner;
+    private String serverNumber;
+    private Dictionary<PublicKey, ClientLibrary> clientList;
+    private GeneralBoard generalBoard;
 
     public Server (){
 
         this.scanner = new Scanner(System.in);
-        System.out.println("Insert the server number:");
+        System.out.println("\nInsert the server number:");
         this.serverNumber = scanner.nextLine();
 
         try {
 
             serverPrivateKey = AsymmetricCrypto.getPrivateKey("data/keys/server" + serverNumber + "_private_key.der");
-            System.out.println(serverPrivateKey.toString());
             serverPublicKey = AsymmetricCrypto.getPublicKey("data/keys/server" + serverNumber + "_public_key.der");
-            System.out.println(serverPublicKey.toString());
 
         } catch (Exception e) {
 
@@ -44,19 +39,21 @@ public class Server implements ClientAPI {
 
         }
         this.clientList = new Hashtable<>();
-        this.generalBoard = new ArrayList<>();
+        this.generalBoard = new GeneralBoard();
 
     }
 
     @Override
-    public void register(PublicKey clientPublicKey, String clientId, byte [] signature) throws RemoteException {
+    public void register(PublicKey clientPublicKey, String clientNumber, byte [] signature) throws RemoteException {
         try{
-            System.out.println("Client called register() method.");
-            if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,clientId)){
-                this.clientList.put(clientPublicKey, new ClientLibrary(clientId));
-                System.out.println("Registered " + clientId + " with Public key: \n" + clientPublicKey);
+            System.out.println("\n-------------------------------------------------------------\n" +
+                    "client" + clientNumber + " called register() method.");
+
+            if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,clientNumber)){
+                this.clientList.put(clientPublicKey, new ClientLibrary(clientNumber));
+                System.out.println("\nRegistered client" + clientNumber + " with Public key: \n\n" + clientPublicKey);
             }else{
-                throw new Exception("Invalid signature");
+                throw new Exception("\nInvalid signature");
             }
         }catch (Exception e){
             //TO DO -> restrict exception catching
@@ -67,18 +64,22 @@ public class Server implements ClientAPI {
 
     @Override
     public void post(PublicKey clientPublicKey, String message, byte [] signature) throws RemoteException {
-        System.out.println("Client called post() method.");
 
         try{
-            clientList.get(clientPublicKey); // To verify if client is registered
+            System.out.println("\n-------------------------------------------------------------\n" +
+                    "client" + clientList.get(clientPublicKey).getClientNumber() + " called post() method.");
+
+        } catch (NullPointerException e) {
+            System.out.println("\nClient is not registered!");
+            throw new RemoteException("\nClient not registered!");
+        }
+
+        try{
             if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,message)){
                 this.clientList.get(clientPublicKey).addAnnouncement(message);
             }else{
-                throw new Exception("Invalid signature");
+                throw new Exception("\nInvalid signature.");
             }
-        }catch (NullPointerException e){
-            System.out.println("Client is not registered!");
-            throw new RemoteException("Client not registered!");
         }catch (Exception e){
             //TO DO -> restrict exception catching
             e.printStackTrace();
@@ -88,17 +89,42 @@ public class Server implements ClientAPI {
     }
 
     @Override
-    public void postGeneral(PublicKey clientPublicKey, String message) throws RemoteException {
+    public void postGeneral(PublicKey clientPublicKey, String message, byte[] signature) throws RemoteException {
 
-        System.err.println( "Client called postGeneral() method." );
-        this.generalBoard.add(new Pair<>(clientPublicKey, message));
+        try{
+            System.out.println("\n-------------------------------------------------------------\n" +
+                    "client" + clientList.get(clientPublicKey).getClientNumber() + " called postGeneral() method.");
+
+        } catch (NullPointerException e) {
+            System.out.println("\nClient is not registered!");
+            throw new RemoteException("Client not registered!");
+        }
+
+        try{
+            if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,message)){
+                this.generalBoard.addAnnouncement(clientList.get(clientPublicKey).getClientNumber(), message);
+            }else{
+                throw new Exception("\nInvalid signature.");
+            }
+        }catch (Exception e){
+            //TO DO -> restrict exception catching
+            e.printStackTrace();
+            throw new RemoteException();
+        }
 
     }
 
     @Override
     public String read(PublicKey clientPublicKey, int number) throws RemoteException {
 
-        System.err.println( "Client called read() method." );
+        try{
+            System.out.println("\n-------------------------------------------------------------\n" +
+                    "A client called the read() method to read client" + clientList.get(clientPublicKey).getClientNumber() + "'s announcements.");
+
+        } catch (NullPointerException e) {
+            System.out.println("\nClient is not registered!");
+            throw new RemoteException("\nClient not registered!");
+        }
 
         return clientList.get(clientPublicKey).getAnnouncements(number);
     }
@@ -107,15 +133,10 @@ public class Server implements ClientAPI {
     @Override
     public String readGeneral(int number) throws RemoteException {
 
-        System.err.println( "Client called readGeneral() method." );
+        System.out.println("\n-------------------------------------------------------------\n" +
+                "A client called the readGeneral() method.");
 
-        if (number >= generalBoard.size() || number == 0){
-            return generalBoard.toString();
-
-        } else {
-            return generalBoard.subList(generalBoard.size() - number,generalBoard.size()).toString();
-
-        }
+        return generalBoard.getAnnouncements(number);
 
     }
 

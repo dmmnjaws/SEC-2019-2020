@@ -1,22 +1,15 @@
 package sec.project.server;
 
+
+import java.security.PublicKey;
 import java.util.ArrayList;
 
-public class ClientLibrary {
-    private int seqNumber;
-    private String clientNumber;
+public class GeneralBoard {
+
     private ArrayList<Announcement> announcements;
 
-    public ClientLibrary(String clientNumber){
-        this.clientNumber = clientNumber;
-        this.seqNumber = 1;
+    public GeneralBoard(){
         this.announcements = new ArrayList<>();
-    }
-
-    public void addAnnouncement(String message){
-        Announcement announcement = new Announcement(announcements.size() + 1, message, this.clientNumber);
-        this.announcements.add(announcement);
-        System.out.println("\nOn client" + clientNumber + "'s board:"+ announcement.printAnnouncement());
     }
 
     public String getAnnouncements(int number){
@@ -35,7 +28,9 @@ public class ClientLibrary {
         return print;
     }
 
-    public String getClientNumber(){
-        return this.clientNumber;
+    public void addAnnouncement(String clientNumber, String message){
+        Announcement announcement = new Announcement(announcements.size() + 1, message, clientNumber);
+        this.announcements.add(announcement);
+        System.out.println("\nOn the General Board:"+ announcement.printAnnouncement());
     }
 }

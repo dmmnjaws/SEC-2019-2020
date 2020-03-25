@@ -35,47 +35,35 @@ public class AsymmetricCrypto {
         return new String(cipher.doFinal(Base64.decode(msg)), "UTF-8");
     }
 
-    public static byte [] wrapDigitalSignature(String msg, PrivateKey privateKey) throws
+    public static byte [] wrapDigitalSignature(String msg, PrivateKey senderPrivateKey) throws
             NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException,
             IllegalBlockSizeException, UnsupportedEncodingException {
 
         Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.ENCRYPT_MODE, privateKey);
+        cipher.init(Cipher.ENCRYPT_MODE, senderPrivateKey);
         byte [] hash = digestMessage(msg);
         return cipher.doFinal(hash);
     }
 
-    public static boolean validateDigitalSignature(byte [] receivedHash, PublicKey publicKey, String msg) throws
+    public static boolean validateDigitalSignature(byte [] receivedHash, PublicKey senderPublicKey, String msg) throws
             NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException,
             IllegalBlockSizeException, UnsupportedEncodingException {
 
         Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.DECRYPT_MODE, publicKey);
+        cipher.init(Cipher.DECRYPT_MODE, senderPublicKey);
         byte [] localHash = digestMessage(msg);
         byte [] receivedDecryptHash = cipher.doFinal(receivedHash);
 
         return Arrays.equals(receivedDecryptHash,localHash);
     }
 
-    public static byte[] digestMessage(String message) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    public static byte[] digestMessage(String msg) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+
         MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-        byte[] messageBytes = message.getBytes("UTF-8");
+        byte[] messageBytes = msg.getBytes("UTF-8");
+
         return messageDigest.digest(messageBytes);
     }
-
-    /*
-    public static String prepareToSend(String msg, PrivateKey clientPrivateKey, PublicKey serverPublicKey) {
-
-        try {
-            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-            messageDigest.update(msg.getBytes("UTF-8"));
-            String digestedMessage = messageDigest.digest().toString();
-            String secureMessage = encryptText(encryptText(digestedMessage, clientPrivateKey), serverPublicKey);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-     */
 
     public static PrivateKey getPrivateKey(String filename) throws Exception {
 
