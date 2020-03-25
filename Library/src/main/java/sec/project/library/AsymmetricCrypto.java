@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -51,8 +52,9 @@ public class AsymmetricCrypto {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, publicKey);
         byte [] localHash = digestMessage(msg);
+        byte [] receivedDecryptHash = cipher.doFinal(receivedHash);
 
-        return localHash.equals(receivedHash);
+        return Arrays.equals(receivedDecryptHash,localHash);
     }
 
     public static byte[] digestMessage(String message) throws NoSuchAlgorithmException, UnsupportedEncodingException {

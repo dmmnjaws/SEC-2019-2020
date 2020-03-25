@@ -52,7 +52,7 @@ public class Server implements ClientAPI {
     public void register(PublicKey clientPublicKey, String clientId, byte [] signature) throws RemoteException {
         try{
             System.out.println("Client called register() method.");
-            if(AsymmetricCrypto.validateDigitalSignature(signature,this.serverPublicKey,clientId)){
+            if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,clientId)){
                 this.clientList.put(clientPublicKey, new ClientLibrary(clientId));
                 System.out.println("Registered " + clientId + " with Public key: \n" + clientPublicKey);
             }else{
