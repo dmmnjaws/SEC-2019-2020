@@ -1,6 +1,7 @@
 package sec.project.server;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ClientLibrary {
     private int seqNumber;
@@ -22,13 +23,14 @@ public class ClientLibrary {
     public String getAnnouncements(int number){
         String print = "";
 
-        if(this.announcements.size() - number < 1) {
-            for (int i = 0; i < announcements.size(); i++) {
-                print += announcements.get(i).printAnnouncement();
+        if (number < announcements.size()) {
+            List<Announcement> resultAnnouncements = this.announcements.subList(announcements.size() - number, announcements.size());
+            for (Announcement announcement : resultAnnouncements){
+                print += "\n" + announcement.printAnnouncement();
             }
-        }else{
-            for (int i = number; i < announcements.size(); i++) {
-                print += announcements.get(i).printAnnouncement();
+        } else {
+            for (Announcement announcement : this.announcements){
+                print += "\n" + announcement.printAnnouncement();
             }
         }
 

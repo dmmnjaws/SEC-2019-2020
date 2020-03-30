@@ -99,6 +99,7 @@ public class Client {
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.seqNumber, this.clientPrivateKey);
                         stub.postGeneral(this.clientPublicKey, message, this.seqNumber, signature);
+                        this.seqNumber++;
 
                         System.out.println("\nSuccessfully posted.");
                         break;
@@ -111,9 +112,11 @@ public class Client {
                         System.out.println("\nHow many announcements do you want to see?");
                         numberOfAnnouncements = scanner.nextLine();
 
-                        response = stub.read(toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements));
+                        response = stub.read(toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), this.seqNumber,
+                                AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString() + numberOfAnnouncements + this.seqNumber, this.clientPrivateKey), this.clientPublicKey);
+                        this.seqNumber++; //this has to be incremented before the signature's validation, otherwise, the client's seqNumber may become < then the server's seqNumber if server signature invalid.
 
-                        if(AsymmetricCrypto.validateDigitalSignature(response.getSignature(),this.serverPublicKey,response.getMessage())){
+                        if(AsymmetricCrypto.validateDigitalSignature(response.getSignature(), this.serverPublicKey, response.getMessage())){
                             System.out.println(response.getMessage());
                         }else{
                             System.out.println("Invalid Response!");
@@ -126,9 +129,11 @@ public class Client {
                         System.out.println("\nHow many announcements do you want to see?");
                         numberOfAnnouncements = scanner.nextLine();
 
-                        response = stub.readGeneral(Integer.parseInt(numberOfAnnouncements));
+                        response = stub.readGeneral(Integer.parseInt(numberOfAnnouncements), this.seqNumber,
+                                AsymmetricCrypto.wrapDigitalSignature(numberOfAnnouncements + this.seqNumber, this.clientPrivateKey), this.clientPublicKey);
+                        this.seqNumber++; //this has to be incremented before the signature's validation, otherwise, the client's seqNumber may become < then the server's seqNumber if server signature invalid.
 
-                        if(AsymmetricCrypto.validateDigitalSignature(response.getSignature(),this.serverPublicKey,response.getMessage())){
+                        if(AsymmetricCrypto.validateDigitalSignature(response.getSignature(), this.serverPublicKey, response.getMessage())){
                             System.out.println(response.getMessage());
                         }else{
                             System.out.println("Invalid Response!");

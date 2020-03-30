@@ -57,14 +57,19 @@ public class Server implements ClientAPI {
             System.out.println("\n-------------------------------------------------------------\n" +
                     "client" + clientNumber + " called register() method.");
 
-            if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,clientNumber)
+            if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, clientNumber)
                     | this.clientList.get(clientPublicKey)==null) {
+
                 this.clientList.put(clientPublicKey, new ClientLibrary(clientNumber));
                 System.out.println("\nRegistered client" + clientNumber + " with Public key: \n\n" + clientPublicKey);
+
             }else{
+
                 throw new Exception("\nInvalid registration attempt");
+
             }
-        }catch (Exception e){
+
+        } catch (Exception e){
             //TO DO -> restrict exception catching
             e.printStackTrace();
             throw new RemoteException();
@@ -80,11 +85,15 @@ public class Server implements ClientAPI {
 
             if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, message + seqNumber)
                     | clientList.get(clientPublicKey).getSeqNumber() == seqNumber) {
+
                 this.clientList.get(clientPublicKey).addAnnouncement(message);
                 this.clientList.get(clientPublicKey).incrementSeqNumber();
                 System.out.println(this.clientList.get(clientPublicKey).getSeqNumber());
+
             } else {
+
                 throw new Exception("\nInvalid signature.");
+
             }
 
         } catch (NullPointerException e) {
@@ -106,13 +115,17 @@ public class Server implements ClientAPI {
             System.out.println("\n-------------------------------------------------------------\n" +
                     "client" + clientList.get(clientPublicKey).getClientNumber() + " called postGeneral() method.");
 
-            if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,message + seqNumber)
+            if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, message + seqNumber)
                     | clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
+
                 this.generalBoard.addAnnouncement(clientList.get(clientPublicKey).getClientNumber(), message);
                 this.clientList.get(clientPublicKey).incrementSeqNumber();
                 System.out.println(this.clientList.get(clientPublicKey).getSeqNumber());
+
             }else{
+
                 throw new Exception("\nInvalid signature.");
+
             }
 
         } catch (NullPointerException e) {
@@ -128,18 +141,31 @@ public class Server implements ClientAPI {
     }
 
     @Override
-    public Acknowledge read(PublicKey clientPublicKey, int number) throws RemoteException {
+    public Acknowledge read(PublicKey toReadClientPublicKey, int number, int seqNumber, byte[] signature, PublicKey clientPublicKey) throws RemoteException {
 
         try{
             System.out.println("\n-------------------------------------------------------------\n" +
-                    "A client called the read() method to read client" + clientList.get(clientPublicKey).getClientNumber() + "'s announcements.");
-            String msg = clientList.get(clientPublicKey).getAnnouncements(number);
-            return new Acknowledge(msg,AsymmetricCrypto.wrapDigitalSignature(msg,this.serverPrivateKey));
+                    "A client called the read() method to read client" + clientList.get(toReadClientPublicKey).getClientNumber() + "'s announcements.");
+
+            if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, toReadClientPublicKey.toString() + number + seqNumber)
+                    | clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
+
+                String message = clientList.get(toReadClientPublicKey).getAnnouncements(number);
+                this.clientList.get(clientPublicKey).incrementSeqNumber();
+                System.out.println(this.clientList.get(clientPublicKey).getSeqNumber());
+                return new Acknowledge(message, AsymmetricCrypto.wrapDigitalSignature(message, this.serverPrivateKey));
+
+            }else{
+
+                throw new Exception("\nInvalid signature.");
+
+            }
+
 
         } catch (NullPointerException e) {
             System.out.println("\nClient is not registered!");
             throw new RemoteException("\nClient not registered!");
-        }catch (Exception e){
+        } catch (Exception e){
             e.printStackTrace();
             throw new RemoteException("\nDecryption error");
         }
@@ -147,14 +173,26 @@ public class Server implements ClientAPI {
     }
 
     @Override
-    public Acknowledge readGeneral(int number) throws RemoteException {
+    public Acknowledge readGeneral(int number, int seqNumber, byte[] signature, PublicKey clientPublicKey) throws RemoteException {
 
-        System.out.println("\n-------------------------------------------------------------\n" +
+        try {
+            System.out.println("\n-------------------------------------------------------------\n" +
                 "A client called the readGeneral() method.");
 
-        String message = generalBoard.getAnnouncements(number);
-        try {
-            return new Acknowledge(message,AsymmetricCrypto.wrapDigitalSignature(message,this.serverPrivateKey));
+            if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,"" + number + seqNumber)
+                    | clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
+
+                String message = generalBoard.getAnnouncements(number);
+                this.clientList.get(clientPublicKey).incrementSeqNumber();
+                System.out.println(this.clientList.get(clientPublicKey).getSeqNumber());
+                return new Acknowledge(message, AsymmetricCrypto.wrapDigitalSignature(message, this.serverPrivateKey));
+
+            }else{
+
+                throw new Exception("\nInvalid signature.");
+
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
             throw new RemoteException("\nDecryption error");
