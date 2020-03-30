@@ -1,10 +1,18 @@
 package sec.project.server;
 
-import com.sun.tools.javac.util.Pair;
+
+import jdk.internal.net.http.common.Pair;
+import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.*;
@@ -113,29 +121,37 @@ public class Server implements ClientAPI {
     }
 
     @Override
-    public String read(PublicKey clientPublicKey, int number) throws RemoteException {
+    public Acknowledge read(PublicKey clientPublicKey, int number) throws RemoteException {
 
         try{
             System.out.println("\n-------------------------------------------------------------\n" +
                     "A client called the read() method to read client" + clientList.get(clientPublicKey).getClientNumber() + "'s announcements.");
-            return clientList.get(clientPublicKey).getAnnouncements(number);
+            String msg = clientList.get(clientPublicKey).getAnnouncements(number);
+            return new Acknowledge(msg,AsymmetricCrypto.wrapDigitalSignature(msg,this.serverPrivateKey));
 
         } catch (NullPointerException e) {
             System.out.println("\nClient is not registered!");
             throw new RemoteException("\nClient not registered!");
+        }catch (Exception e){
+            e.printStackTrace();
+            throw new RemoteException("\nDecryption error");
         }
 
     }
 
-    // este metodo envia tambem a chave publica e imprime isso, portanto se aparecer, nao pensem que é um erro. Depois temos de arranjar uma solução melhor.
     @Override
-    public String readGeneral(int number) throws RemoteException {
+    public Acknowledge readGeneral(int number) throws RemoteException {
 
         System.out.println("\n-------------------------------------------------------------\n" +
                 "A client called the readGeneral() method.");
 
-        return generalBoard.getAnnouncements(number);
-
+        String message = generalBoard.getAnnouncements(number);
+        try {
+            return new Acknowledge(message,AsymmetricCrypto.wrapDigitalSignature(message,this.serverPrivateKey));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RemoteException("\nDecryption error");
+        }
     }
 
 }

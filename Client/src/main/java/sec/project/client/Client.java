@@ -1,5 +1,7 @@
 package sec.project.client;
 
+import jdk.internal.net.http.common.Pair;
+import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
 
@@ -50,6 +52,7 @@ public class Client {
             String message;
             String numberOfAnnouncements;
             byte[] signature;
+            Acknowledge response;
 
             try {
                 switch (tokens[0]) {
@@ -105,7 +108,14 @@ public class Client {
                         System.out.println("\nHow many announcements do you want to see?");
                         numberOfAnnouncements = scanner.nextLine();
 
-                        System.out.println(stub.read(toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements)));
+                        response = stub.read(toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements));
+
+                        if(AsymmetricCrypto.validateDigitalSignature(response.getSignature(),this.serverPublicKey,response.getMessage())){
+                            System.out.println(response.getMessage());
+                        }else{
+                            System.out.println("Invalid Response!");
+                        }
+
                         break;
 
                     case "readGeneral":
@@ -113,7 +123,14 @@ public class Client {
                         System.out.println("\nHow many announcements do you want to see?");
                         numberOfAnnouncements = scanner.nextLine();
 
-                        System.out.println(stub.readGeneral(Integer.parseInt(numberOfAnnouncements)));
+                        response = stub.readGeneral(Integer.parseInt(numberOfAnnouncements));
+
+                        if(AsymmetricCrypto.validateDigitalSignature(response.getSignature(),this.serverPublicKey,response.getMessage())){
+                            System.out.println(response.getMessage());
+                        }else{
+                            System.out.println("Invalid Response!");
+                        }
+
                         break;
 
                 }
