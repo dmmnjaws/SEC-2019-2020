@@ -57,11 +57,12 @@ public class Server implements ClientAPI {
             System.out.println("\n-------------------------------------------------------------\n" +
                     "client" + clientNumber + " called register() method.");
 
-            if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,clientNumber)){
+            if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,clientNumber)
+                    | this.clientList.get(clientPublicKey)==null) {
                 this.clientList.put(clientPublicKey, new ClientLibrary(clientNumber));
                 System.out.println("\nRegistered client" + clientNumber + " with Public key: \n\n" + clientPublicKey);
             }else{
-                throw new Exception("\nInvalid signature");
+                throw new Exception("\nInvalid registration attempt");
             }
         }catch (Exception e){
             //TO DO -> restrict exception catching
@@ -71,14 +72,17 @@ public class Server implements ClientAPI {
     }
 
     @Override
-    public void post(PublicKey clientPublicKey, String message, byte [] signature) throws RemoteException {
+    public void post(PublicKey clientPublicKey, String message, int seqNumber, byte [] signature) throws RemoteException {
 
         try {
             System.out.println("\n-------------------------------------------------------------\n" +
                     "client" + clientList.get(clientPublicKey).getClientNumber() + " called post() method.");
 
-            if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, message)) {
+            if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, message + seqNumber)
+                    | clientList.get(clientPublicKey).getSeqNumber() == seqNumber) {
                 this.clientList.get(clientPublicKey).addAnnouncement(message);
+                this.clientList.get(clientPublicKey).incrementSeqNumber();
+                System.out.println(this.clientList.get(clientPublicKey).getSeqNumber());
             } else {
                 throw new Exception("\nInvalid signature.");
             }
@@ -96,14 +100,17 @@ public class Server implements ClientAPI {
     }
 
     @Override
-    public void postGeneral(PublicKey clientPublicKey, String message, byte[] signature) throws RemoteException {
+    public void postGeneral(PublicKey clientPublicKey, String message, int seqNumber, byte[] signature) throws RemoteException {
 
         try{
             System.out.println("\n-------------------------------------------------------------\n" +
                     "client" + clientList.get(clientPublicKey).getClientNumber() + " called postGeneral() method.");
 
-            if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,message)){
+            if(AsymmetricCrypto.validateDigitalSignature(signature,clientPublicKey,message + seqNumber)
+                    | clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
                 this.generalBoard.addAnnouncement(clientList.get(clientPublicKey).getClientNumber(), message);
+                this.clientList.get(clientPublicKey).incrementSeqNumber();
+                System.out.println(this.clientList.get(clientPublicKey).getSeqNumber());
             }else{
                 throw new Exception("\nInvalid signature.");
             }

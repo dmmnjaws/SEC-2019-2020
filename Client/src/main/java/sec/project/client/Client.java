@@ -18,6 +18,7 @@ public class Client {
     private Scanner scanner;
     private String clientNumber;
     private String serverNumber;
+    private int seqNumber;
 
     public Client (ClientAPI stub) {
 
@@ -26,6 +27,7 @@ public class Client {
         this.clientNumber = scanner.nextLine();
         System.out.println("\nInsert the server number you want to connect to:");
         this.serverNumber = scanner.nextLine();
+        this.seqNumber = 1;
 
         try {
 
@@ -76,8 +78,9 @@ public class Client {
                         System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
                         message += scanner.nextLine();
 
-                        signature = AsymmetricCrypto.wrapDigitalSignature(message, this.clientPrivateKey);
-                        stub.post(this.clientPublicKey, message, signature);
+                        signature = AsymmetricCrypto.wrapDigitalSignature(message + this.seqNumber, this.clientPrivateKey);
+                        stub.post(this.clientPublicKey, message, this.seqNumber, signature);
+                        this.seqNumber++;
 
                         System.out.println("\nSuccessfully posted.");
                         break;
@@ -94,8 +97,8 @@ public class Client {
                         System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
                         message += scanner.nextLine();
 
-                        signature = AsymmetricCrypto.wrapDigitalSignature(message, this.clientPrivateKey);
-                        stub.postGeneral(this.clientPublicKey, message, signature);
+                        signature = AsymmetricCrypto.wrapDigitalSignature(message + this.seqNumber, this.clientPrivateKey);
+                        stub.postGeneral(this.clientPublicKey, message, this.seqNumber, signature);
 
                         System.out.println("\nSuccessfully posted.");
                         break;

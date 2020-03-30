@@ -38,4 +38,12 @@ public class ClientLibrary {
     public String getClientNumber(){
         return this.clientNumber;
     }
+
+    public int getSeqNumber() {
+        return this.seqNumber;
+    }
+
+    public void incrementSeqNumber(){
+        this.seqNumber++;
+    }
 }
