@@ -12,6 +12,9 @@ import java.security.*;
  */
 public class ClientInit {
 
+    public static Registry registry;
+    public static ClientAPI stub;
+
     public static void main( String[] args ) {
 
         System.out.println( "\nHello World!" );
@@ -26,8 +29,8 @@ public class ClientInit {
 
         try {
 
-            Registry registry = LocateRegistry.getRegistry(server_port);
-            ClientAPI stub = (ClientAPI) registry.lookup("localhost:" + String.valueOf(server_port) + "/ClientAPI");
+            this.registry = LocateRegistry.getRegistry(server_port);
+            this.stub = (ClientAPI) registry.lookup("localhost:" + String.valueOf(server_port) + "/ClientAPI");
             Client client = new Client(stub);
             System.err.println( "\nClient ready." );
             client.execute();

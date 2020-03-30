@@ -9,6 +9,9 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class ServerInit {
 
+    private static Registry registry;
+    private static ClientAPI stub;
+
     public static void main( String[] args ) {
 
         System.out.println( "\nHello World!" );
@@ -24,8 +27,8 @@ public class ServerInit {
         try {
 
             Server server = new Server();
-            ClientAPI stub = (ClientAPI) UnicastRemoteObject.exportObject(server, server_port);
-            Registry registry = LocateRegistry.createRegistry(server_port);
+            this.stub = (ClientAPI) UnicastRemoteObject.exportObject(server, server_port);
+            this.registry = LocateRegistry.createRegistry(server_port);
             registry.rebind("localhost:" + String.valueOf(server_port) + "/ClientAPI", stub);
             System.err.println( "\nServer ready." );
 
