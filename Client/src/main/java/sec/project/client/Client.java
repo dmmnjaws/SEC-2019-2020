@@ -4,6 +4,7 @@ import jdk.internal.net.http.common.Pair;
 import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
+import sun.awt.SunHints;
 
 import java.io.Console;
 import java.security.*;
@@ -11,6 +12,7 @@ import java.util.Scanner;
 
 public class Client {
 
+    private KeyStore clientKeyStore;
     private PrivateKey clientPrivateKey;
     private PublicKey clientPublicKey;
     private PublicKey serverPublicKey;
@@ -31,9 +33,10 @@ public class Client {
 
         try {
 
-            this.clientPrivateKey = AsymmetricCrypto.getPrivateKey("data/keys/client" + clientNumber + "_private_key.der");
-            this.clientPublicKey = AsymmetricCrypto.getPublicKey("data/keys/client" + clientNumber + "_public_key.der");
-            this.serverPublicKey = AsymmetricCrypto.getPublicKey("data/keys/server" + serverNumber + "_public_key.der");
+            this.clientKeyStore = AsymmetricCrypto.getKeyStore("data/keys/client" + this.clientNumber + "_keystore.jks", "client" + this.clientNumber + "password");
+            this.clientPrivateKey = AsymmetricCrypto.getPrivateKey(this.clientKeyStore, "client" + this.clientNumber + "password", "client" + this.clientNumber);
+            this.clientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + this.clientNumber + "_certificate.crt");
+            this.serverPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/server" + this.serverNumber + "_certificate.crt");
 
         } catch (Exception e) {
 

@@ -11,10 +11,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 import java.util.*;
 
 /**
@@ -23,6 +20,7 @@ import java.util.*;
  */
 public class Server implements ClientAPI {
 
+    private KeyStore serverKeyStore;
     private PrivateKey serverPrivateKey;
     private PublicKey serverPublicKey;
     private Scanner scanner;
@@ -38,8 +36,9 @@ public class Server implements ClientAPI {
 
         try {
 
-            serverPrivateKey = AsymmetricCrypto.getPrivateKey("data/keys/server" + serverNumber + "_private_key.der");
-            serverPublicKey = AsymmetricCrypto.getPublicKey("data/keys/server" + serverNumber + "_public_key.der");
+            this.serverKeyStore = AsymmetricCrypto.getKeyStore("data/keys/server" + this.serverNumber + "_keystore.jks", "server" + this.serverNumber + "password");
+            this.serverPrivateKey = AsymmetricCrypto.getPrivateKey(this.serverKeyStore, "server" + this.serverNumber + "password", "server" + this.serverNumber);
+            this.serverPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/server" + this.serverNumber + "_certificate.crt");
 
         } catch (Exception e) {
 
