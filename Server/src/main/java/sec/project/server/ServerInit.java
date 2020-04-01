@@ -11,6 +11,7 @@ public class ServerInit {
 
     private static Registry registry;
     private static ClientAPI stub;
+    private static Server server;
 
     public static void main( String[] args ) {
 
@@ -26,7 +27,7 @@ public class ServerInit {
 
         try {
 
-            Server server = new Server();
+            this.server = new Server();
             this.stub = (ClientAPI) UnicastRemoteObject.exportObject(server, server_port);
             this.registry = LocateRegistry.createRegistry(server_port);
             registry.rebind("localhost:" + String.valueOf(server_port) + "/ClientAPI", stub);
