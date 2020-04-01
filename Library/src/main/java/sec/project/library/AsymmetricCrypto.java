@@ -2,10 +2,16 @@ package sec.project.library;
 
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
@@ -82,5 +88,31 @@ public class AsymmetricCrypto {
         KeyFactory kf = KeyFactory.getInstance("RSA");
 
         return kf.generatePublic(spec);
+    }
+
+    public static KeyStore getKeyStore(String filename, String keystorePassword) throws Exception {
+
+        KeyStore keyStore = KeyStore.getInstance("JKS");
+        InputStream readStream = new FileInputStream(filename);
+        keyStore.load(readStream, keystorePassword.toCharArray());
+        readStream.close();
+
+        return keyStore;
+    }
+
+    public static PrivateKey getPrivateKey(KeyStore keyStore, String privateKeyPassword, String allias) throws UnrecoverableEntryException, NoSuchAlgorithmException, KeyStoreException {
+
+        KeyStore.ProtectionParameter passwordParameter = new KeyStore.PasswordProtection(privateKeyPassword.toCharArray());
+        KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(allias, passwordParameter);
+
+        return privateKeyEntry.getPrivateKey();
+    }
+
+    public static PublicKey getPublicKeyFromCert(String filename) throws FileNotFoundException, CertificateException {
+        FileInputStream fin = new FileInputStream(filename);
+        CertificateFactory f = CertificateFactory.getInstance("X.509");
+        X509Certificate certificate = (X509Certificate)f.generateCertificate(fin);
+
+        return certificate.getPublicKey();
     }
 }
