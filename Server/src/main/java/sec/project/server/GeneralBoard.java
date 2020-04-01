@@ -1,10 +1,11 @@
 package sec.project.server;
 
 
+import java.io.Serializable;
 import java.security.PublicKey;
 import java.util.ArrayList;
 
-public class GeneralBoard {
+public class GeneralBoard implements Serializable {
 
     private ArrayList<Announcement> announcements;
 
@@ -33,4 +34,9 @@ public class GeneralBoard {
         this.announcements.add(announcement);
         System.out.println("\nOn the General Board:"+ announcement.printAnnouncement());
     }
+
+    public ArrayList<Announcement> getAnnouncements() {
+        return this.announcements;
+    }
 }
+

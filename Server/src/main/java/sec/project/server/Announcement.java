@@ -1,8 +1,9 @@
 package sec.project.server;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Announcement {
+public class Announcement implements Serializable {
     private String info;
     private int id;
     private ArrayList<Integer> references;
@@ -29,5 +30,21 @@ public class Announcement {
         }
 
         return "\nAnnouncement id: "+ this.id + "\n message: " + this.info + "\n references: " + ref;
+    }
+
+    public ArrayList<Integer> getReferences() {
+        return this.references;
+    }
+
+    public int getId() {
+        return this.id;
+    }
+
+    public String getClientNumber() {
+        return this.clientNumber;
+    }
+
+    public String getInfo() {
+        return this.info;
     }
 }

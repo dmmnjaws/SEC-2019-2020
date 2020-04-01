@@ -1,9 +1,10 @@
 package sec.project.server;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClientLibrary {
+public class ClientLibrary implements Serializable {
     private int seqNumber;
     private String clientNumber;
     private ArrayList<Announcement> announcements;
@@ -43,6 +44,10 @@ public class ClientLibrary {
 
     public int getSeqNumber() {
         return this.seqNumber;
+    }
+
+    public ArrayList<Announcement> getAnnouncements() {
+        return this.announcements;
     }
 
     public void incrementSeqNumber(){

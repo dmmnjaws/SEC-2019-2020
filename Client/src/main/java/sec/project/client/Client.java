@@ -110,7 +110,7 @@ public class Client {
                     case "read":
                         
                         System.out.println("\nWrite the number of the client whose announcement board you want to read:");
-                        PublicKey toReadClientPublicKey = AsymmetricCrypto.getPublicKey("data/keys/client" + scanner.nextLine() + "_public_key.der");
+                        PublicKey toReadClientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + scanner.nextLine() + "_certificate.crt");
 
                         System.out.println("\nHow many announcements do you want to see?");
                         numberOfAnnouncements = scanner.nextLine();
