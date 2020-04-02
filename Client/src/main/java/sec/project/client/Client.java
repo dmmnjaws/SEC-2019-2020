@@ -6,8 +6,9 @@ import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
 import sun.awt.SunHints;
 
-import java.io.Console;
+import java.io.*;
 import java.security.*;
+import java.util.Hashtable;
 import java.util.Scanner;
 
 public class Client {
@@ -20,6 +21,8 @@ public class Client {
     private Scanner scanner;
     private String clientNumber;
     private String serverNumber;
+    private String keyStorePassword;
+    private String privateKeyPassword;
     private int seqNumber;
 
     public Client (ClientAPI stub) {
@@ -29,14 +32,19 @@ public class Client {
         this.clientNumber = scanner.nextLine();
         System.out.println("\nInsert the server number you want to connect to:");
         this.serverNumber = scanner.nextLine();
-        this.seqNumber = 1;
+        System.out.println("\nInsert your KeyStore's password:");
+        this.keyStorePassword = new String(System.console().readPassword());
+        System.out.println("\nInsert your Private Key's password:");
+        this.privateKeyPassword = new String(System.console().readPassword());
 
         try {
 
-            this.clientKeyStore = AsymmetricCrypto.getKeyStore("data/keys/client" + this.clientNumber + "_keystore.jks", "client" + this.clientNumber + "password");
-            this.clientPrivateKey = AsymmetricCrypto.getPrivateKey(this.clientKeyStore, "client" + this.clientNumber + "password", "client" + this.clientNumber);
+            this.clientKeyStore = AsymmetricCrypto.getKeyStore("data/keys/client" + this.clientNumber + "_keystore.jks", this.keyStorePassword);
+            this.clientPrivateKey = AsymmetricCrypto.getPrivateKey(this.clientKeyStore, this.privateKeyPassword, "client" + this.clientNumber);
             this.clientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + this.clientNumber + "_certificate.crt");
             this.serverPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/server" + this.serverNumber + "_certificate.crt");
+
+            loadState();
 
         } catch (Exception e) {
 
@@ -84,6 +92,7 @@ public class Client {
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.seqNumber, this.clientPrivateKey);
                         stub.post(this.clientPublicKey, message, this.seqNumber, signature);
                         this.seqNumber++;
+                        saveState();
 
                         System.out.println("\nSuccessfully posted.");
                         break;
@@ -103,6 +112,7 @@ public class Client {
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.seqNumber, this.clientPrivateKey);
                         stub.postGeneral(this.clientPublicKey, message, this.seqNumber, signature);
                         this.seqNumber++;
+                        saveState();
 
                         System.out.println("\nSuccessfully posted.");
                         break;
@@ -117,7 +127,8 @@ public class Client {
 
                         response = stub.read(toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), this.seqNumber,
                                 AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString() + numberOfAnnouncements + this.seqNumber, this.clientPrivateKey), this.clientPublicKey);
-                        this.seqNumber++; //this has to be incremented before the signature's validation, otherwise, the client's seqNumber may become < then the server's seqNumber if server signature invalid.
+                        this.seqNumber++;
+                        saveState();
 
                         if(AsymmetricCrypto.validateDigitalSignature(response.getSignature(), this.serverPublicKey, response.getMessage())){
                             System.out.println(response.getMessage());
@@ -134,7 +145,8 @@ public class Client {
 
                         response = stub.readGeneral(Integer.parseInt(numberOfAnnouncements), this.seqNumber,
                                 AsymmetricCrypto.wrapDigitalSignature(numberOfAnnouncements + this.seqNumber, this.clientPrivateKey), this.clientPublicKey);
-                        this.seqNumber++; //this has to be incremented before the signature's validation, otherwise, the client's seqNumber may become < then the server's seqNumber if server signature invalid.
+                        this.seqNumber++;
+                        saveState();
 
                         if(AsymmetricCrypto.validateDigitalSignature(response.getSignature(), this.serverPublicKey, response.getMessage())){
                             System.out.println(response.getMessage());
@@ -150,4 +162,39 @@ public class Client {
             }
         }
     }
+
+    public void saveState() throws IOException {
+
+        FileOutputStream f = new FileOutputStream(new File("data/client" + this.clientNumber + "state.txt"));
+        ObjectOutputStream o = new ObjectOutputStream(f);
+
+        o.writeObject(this.seqNumber);
+        System.out.println("\nDEBUG: Saving client state:\n" + this.seqNumber);
+
+        o.close();
+        f.close();
+    }
+
+    public void loadState() throws IOException, ClassNotFoundException {
+
+        File stateFile = new File("data/client" + this.clientNumber + "state.txt");
+
+        if (!(stateFile.exists())) {
+
+            this.seqNumber = 1;
+
+        } else {
+
+            FileInputStream file = new FileInputStream(stateFile);
+            ObjectInputStream objStream = new ObjectInputStream(file);
+
+            this.seqNumber = (int) objStream.readObject();
+            System.out.println("\nDEBUG: Loading client state:\n" + this.seqNumber);
+
+            objStream.close();
+            file.close();
+        }
+
+    }
+
 }

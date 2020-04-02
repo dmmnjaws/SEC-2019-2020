@@ -45,6 +45,7 @@ public class AsymmetricCrypto {
             NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException,
             IllegalBlockSizeException, UnsupportedEncodingException {
 
+        System.out.println("\nDEBUG: Wrapping Signature:\n" + msg);
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, senderPrivateKey);
         byte [] hash = digestMessage(msg);
@@ -55,10 +56,12 @@ public class AsymmetricCrypto {
             NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException,
             IllegalBlockSizeException, UnsupportedEncodingException {
 
+        System.out.println("\nDEBUG: Unwrapping Signature:\n" + msg);
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, senderPublicKey);
         byte [] localHash = digestMessage(msg);
         byte [] receivedDecryptHash = cipher.doFinal(receivedHash);
+        System.out.println("\nDEBUG: boolean - equal signatures?\n" + Arrays.equals(receivedDecryptHash,localHash));
 
         return Arrays.equals(receivedDecryptHash,localHash);
     }

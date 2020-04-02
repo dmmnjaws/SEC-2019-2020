@@ -15,7 +15,6 @@ public class ServerInit {
     private static Registry registry;
     private static ClientAPI stub;
     private static Server server;
-    private Scanner scanner;
 
     public static void main( String[] args ) {
 
@@ -31,11 +30,7 @@ public class ServerInit {
     public ServerInit(int server_port){
 
         try {
-            this.scanner = new Scanner(System.in);
-            System.out.println("\nInsert the server number:");
-            String serverNumber = scanner.nextLine();
-
-            this.server = new Server(serverNumber);
+            this.server = new Server();
             this.stub = (ClientAPI) UnicastRemoteObject.exportObject(server, server_port);
             this.registry = LocateRegistry.createRegistry(server_port);
             registry.rebind("localhost:" + String.valueOf(server_port) + "/ClientAPI", stub);

@@ -17,28 +17,17 @@ public class Server implements ClientAPI {
     private Map<PublicKey, ClientLibrary> clientList;
     private GeneralBoard generalBoard;
 
-    public Server (String serverNumber){
+    private Scanner scanner;
 
-        this.serverNumber = serverNumber;
-        File stateFile = new File("data/state.txt");
+    public Server (){
+
+        this.scanner = new Scanner(System.in);
+        System.out.println("\nInsert the server number:");
+        this.serverNumber = scanner.nextLine();
 
         try {
 
-            if(!(stateFile.exists())){
-                this.clientList = new Hashtable<>();
-                this.generalBoard = new GeneralBoard();
-            }else{
-                FileInputStream file = new FileInputStream(stateFile);
-                ObjectInputStream objStream = new ObjectInputStream(file);
-
-                State state = (State) objStream.readObject();
-
-                objStream.close();
-                file.close();
-
-                this.clientList = state.getClientList();
-                this.generalBoard = state.getGeneralBoard();
-            }
+            loadState();
 
             this.serverKeyStore = AsymmetricCrypto.getKeyStore("data/keys/server" + this.serverNumber + "_keystore.jks", "server" + this.serverNumber + "password");
             this.serverPrivateKey = AsymmetricCrypto.getPrivateKey(this.serverKeyStore, "server" + this.serverNumber + "password", "server" + this.serverNumber);
@@ -62,6 +51,32 @@ public class Server implements ClientAPI {
 
         o.close();
         f.close();
+    }
+
+    public void loadState() throws IOException, ClassNotFoundException {
+
+        File stateFile = new File("data/state.txt");
+
+        if (!(stateFile.exists())) {
+
+            this.clientList = new Hashtable<>();
+            this.generalBoard = new GeneralBoard();
+
+        } else {
+
+            FileInputStream file = new FileInputStream(stateFile);
+            ObjectInputStream objStream = new ObjectInputStream(file);
+
+            State state = (State) objStream.readObject();
+
+            objStream.close();
+            file.close();
+
+            this.clientList = state.getClientList();
+            this.generalBoard = state.getGeneralBoard();
+
+        }
+
     }
 
     @Override
@@ -101,17 +116,21 @@ public class Server implements ClientAPI {
             if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, message + seqNumber)
                     & clientList.get(clientPublicKey).getSeqNumber() == seqNumber) {
 
+                System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
+                System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
                 this.clientList.get(clientPublicKey).addAnnouncement(message);
                 this.clientList.get(clientPublicKey).incrementSeqNumber();
-                System.out.println(this.clientList.get(clientPublicKey).getSeqNumber());
+                saveState();
+                System.out.println("\nDEBUG: incremented sequence number:\n" + this.clientList.get(clientPublicKey).getSeqNumber());
 
             } else {
 
+                System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
+                System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
+                System.out.println("\nDEBUG: boolean - equal seqNumbers?\n" + (clientList.get(clientPublicKey).getSeqNumber() == seqNumber));
                 throw new Exception("\nInvalid signature.");
 
             }
-
-            saveState();
 
         } catch (NullPointerException e) {
             System.out.println("\nClient is not registered!");
@@ -135,15 +154,22 @@ public class Server implements ClientAPI {
             if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, message + seqNumber)
                     & clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
 
+                System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
+                System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
                 this.generalBoard.addAnnouncement(clientList.get(clientPublicKey).getClientNumber(), message);
                 this.clientList.get(clientPublicKey).incrementSeqNumber();
-                System.out.println(this.clientList.get(clientPublicKey).getSeqNumber());
+                saveState();
+                System.out.println("\nDEBUG: incremented sequence number:\n" + this.clientList.get(clientPublicKey).getSeqNumber());
 
             }else{
 
+                System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
+                System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
+                System.out.println("\nDEBUG: boolean - equal seqNumbers?\n" + (clientList.get(clientPublicKey).getSeqNumber() == seqNumber));
                 throw new Exception("\nInvalid signature.");
 
             }
+
 
         } catch (NullPointerException e) {
             System.out.println("\nClient is not registered!");
@@ -167,13 +193,19 @@ public class Server implements ClientAPI {
             if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, toReadClientPublicKey.toString() + number + seqNumber)
                     & clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
 
+                System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
+                System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
                 String message = clientList.get(toReadClientPublicKey).getAnnouncements(number);
                 this.clientList.get(clientPublicKey).incrementSeqNumber();
-                System.out.println(this.clientList.get(clientPublicKey).getSeqNumber());
+                System.out.println("\nDEBUG: incremented sequence number:\n" + this.clientList.get(clientPublicKey).getSeqNumber());
+
+                saveState();
                 return new Acknowledge(message, AsymmetricCrypto.wrapDigitalSignature(message, this.serverPrivateKey));
 
             }else{
-
+                System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
+                System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
+                System.out.println("\nDEBUG: boolean - equal seqNumbers?\n" + (clientList.get(clientPublicKey).getSeqNumber() == seqNumber));
                 throw new Exception("\nInvalid signature.");
 
             }
@@ -199,13 +231,19 @@ public class Server implements ClientAPI {
             if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,"" + number + seqNumber)
                     & clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
 
+                System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
+                System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
                 String message = generalBoard.getAnnouncements(number);
                 this.clientList.get(clientPublicKey).incrementSeqNumber();
-                System.out.println(this.clientList.get(clientPublicKey).getSeqNumber());
+                System.out.println("\nDEBUG: incremented sequence number:\n" + this.clientList.get(clientPublicKey).getSeqNumber());
+
+                saveState();
                 return new Acknowledge(message, AsymmetricCrypto.wrapDigitalSignature(message, this.serverPrivateKey));
 
             }else{
-
+                System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
+                System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
+                System.out.println("\nDEBUG: boolean - equal seqNumbers?\n" + (clientList.get(clientPublicKey).getSeqNumber() == seqNumber));
                 throw new Exception("\nInvalid signature.");
 
             }
