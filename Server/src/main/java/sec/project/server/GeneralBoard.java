@@ -29,7 +29,7 @@ public class GeneralBoard implements Serializable {
         return print;
     }
 
-    public void addAnnouncement(String clientNumber, String message){
+    public synchronized void addAnnouncement(String clientNumber, String message){
         Announcement announcement = new Announcement(announcements.size() + 1, message, clientNumber);
         this.announcements.add(announcement);
         System.out.println("\nOn the General Board:"+ announcement.printAnnouncement());
