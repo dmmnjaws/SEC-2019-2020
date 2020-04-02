@@ -12,31 +12,31 @@ How to execute our project (intermidiate version)
   
   -> mvn spring-boot:run
   
-  \\It will ask to insert the server id
+  \\\ It will ask to insert the server id
  
-  -> 1 \\1 is server id in this version is only one
+  -> 1 \\\ 1 is server id in this version is only one
 
 3 - Open terminal(s) for clients in {basedir}/Client
   
   -> mvn spring-boot:run
   
-  \\It will ask to insert the client id
+  \\\ It will ask to insert the client id
  
-  -> X \\ Can be 1 or 2 if you want to add more you will need to create new keys
+  -> X \\\ Can be 1 or 2 if you want to add more you will need to create new keys
 
-  \\It will ask the server you want to connect
+  \\\ It will ask the server you want to connect
 
-  -> 1 \\ In this case is only one possible choice
+  -> 1 \\\ In this case is only one possible choice
 
-  \\Then you will need to insert the keystore and private key passwords
+  \\\ Then you will need to insert the keystore and private key passwords
 
-  -> clientXpassword \\ X is client id
+  -> clientXpassword \\\ X is client id
 
-  \\Then you can insert the application commands
+  \\\ Then you can insert the application commands
   
   -> register/post/read/postGeneral/readGeneral
   
-  \\Then follow the instructions to complete the commands
+  \\\ Then follow the instructions to complete the commands
 
 Extra:
 
