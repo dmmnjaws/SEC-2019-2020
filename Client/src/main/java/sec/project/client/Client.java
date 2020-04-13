@@ -173,6 +173,7 @@ public class Client {
         }
     }
 
+    @Deprecated
     public void saveState() throws IOException {
 
         FileOutputStream f = new FileOutputStream(new File("data/client" + this.clientNumber + "state.txt"));
@@ -185,6 +186,7 @@ public class Client {
         f.close();
     }
 
+    @Deprecated
     public void loadState() throws IOException, ClassNotFoundException {
 
         File stateFile = new File("data/client" + this.clientNumber + "state.txt");

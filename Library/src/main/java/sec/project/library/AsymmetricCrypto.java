@@ -74,6 +74,7 @@ public class AsymmetricCrypto {
         return messageDigest.digest(messageBytes);
     }
 
+    @Deprecated
     public static PrivateKey getPrivateKey(String filename) throws Exception {
 
         byte[] keyBytes = Files.readAllBytes(Paths.get(filename));
@@ -84,6 +85,7 @@ public class AsymmetricCrypto {
 
     }
 
+    @Deprecated
     public static PublicKey getPublicKey(String filename) throws Exception {
 
         byte[] keyBytes = Files.readAllBytes(Paths.get(filename));
