@@ -56,7 +56,7 @@ Extra:
     
     -> keytool -importkeystore -srckeystore clientX_pkcs12.p12 -srcstoretype pkcs12 -destkeystore clientX_keystore.jks -deststoretype JKS
 
-
+-------------------------------------------------------------------------------------------------------------------------------
 DISCUSSÃO COM O PROFESSOR:
 
 // FEITO em vez de guardar o estado do cliente com o sequence number, pedir o sequence number ao servidor antes de se juntar.
