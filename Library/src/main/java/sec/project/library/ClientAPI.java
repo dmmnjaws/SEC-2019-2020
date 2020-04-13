@@ -11,4 +11,5 @@ public interface ClientAPI extends Remote {
     void postGeneral(PublicKey clientPublicKey, String message, int seqNumber, byte[] signature) throws RemoteException;
     Acknowledge read(PublicKey toReadClientPublicKey, int number, int seqNumber, byte[] signature, PublicKey clientPublicKey) throws RemoteException;
     Acknowledge readGeneral(int number, int seqNumber, byte[] signature, PublicKey clientPublicKey) throws RemoteException;
+    Acknowledge login(PublicKey receiverPublicKey) throws RemoteException;
 }

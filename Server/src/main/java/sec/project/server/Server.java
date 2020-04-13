@@ -3,6 +3,10 @@ package sec.project.server;
 import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.rmi.RemoteException;
 import java.security.*;
@@ -253,5 +257,19 @@ public class Server implements ClientAPI {
             throw new RemoteException("\nDecryption error");
         }
     }
+
+    @Override
+    public Acknowledge login(PublicKey clientPublicKey) throws RemoteException {
+
+        try {
+            String message = "" + this.clientList.get(clientPublicKey).getSeqNumber();
+            return new Acknowledge(message, AsymmetricCrypto.wrapDigitalSignature(message, this.serverPrivateKey));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RemoteException("\nLogin error");
+        }
+
+    }
+
 
 }

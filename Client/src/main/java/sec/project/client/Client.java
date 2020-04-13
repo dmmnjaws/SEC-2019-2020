@@ -44,7 +44,7 @@ public class Client {
             this.clientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + this.clientNumber + "_certificate.crt");
             this.serverPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/server" + this.serverNumber + "_certificate.crt");
 
-            loadState();
+            //loadState();
 
         } catch (Exception e) {
 
@@ -68,11 +68,21 @@ public class Client {
             Acknowledge response;
 
             try {
+
                 switch (tokens[0]) {
+                    case "login":
+
+                        response = stub.login(this.clientPublicKey);
+                        if (AsymmetricCrypto.validateDigitalSignature(response.getSignature(), this.serverPublicKey, response.getMessage())){
+                            this.seqNumber = Integer.parseInt(response.getMessage());
+                        }
+                        break;
+
                     case "register":
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(this.clientNumber, this.clientPrivateKey);
                         stub.register(this.clientPublicKey, this.clientNumber, signature);
+                        this.seqNumber = 1;
 
                         System.out.println("\nSuccessful registration.");
                         break;
@@ -92,7 +102,7 @@ public class Client {
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.seqNumber, this.clientPrivateKey);
                         stub.post(this.clientPublicKey, message, this.seqNumber, signature);
                         this.seqNumber++;
-                        saveState();
+                        //saveState();
 
                         System.out.println("\nSuccessfully posted.");
                         break;
@@ -112,7 +122,7 @@ public class Client {
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.seqNumber, this.clientPrivateKey);
                         stub.postGeneral(this.clientPublicKey, message, this.seqNumber, signature);
                         this.seqNumber++;
-                        saveState();
+                        //saveState();
 
                         System.out.println("\nSuccessfully posted.");
                         break;
@@ -128,7 +138,7 @@ public class Client {
                         response = stub.read(toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), this.seqNumber,
                                 AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString() + numberOfAnnouncements + this.seqNumber, this.clientPrivateKey), this.clientPublicKey);
                         this.seqNumber++;
-                        saveState();
+                        //saveState();
 
                         if(AsymmetricCrypto.validateDigitalSignature(response.getSignature(), this.serverPublicKey, response.getMessage())){
                             System.out.println(response.getMessage());
@@ -146,7 +156,7 @@ public class Client {
                         response = stub.readGeneral(Integer.parseInt(numberOfAnnouncements), this.seqNumber,
                                 AsymmetricCrypto.wrapDigitalSignature(numberOfAnnouncements + this.seqNumber, this.clientPrivateKey), this.clientPublicKey);
                         this.seqNumber++;
-                        saveState();
+                        //saveState();
 
                         if(AsymmetricCrypto.validateDigitalSignature(response.getSignature(), this.serverPublicKey, response.getMessage())){
                             System.out.println(response.getMessage());
@@ -194,6 +204,10 @@ public class Client {
             objStream.close();
             file.close();
         }
+
+    }
+
+    public void login(){
 
     }
 

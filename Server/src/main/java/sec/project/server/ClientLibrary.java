@@ -15,7 +15,7 @@ public class ClientLibrary implements Serializable {
         this.announcements = new ArrayList<>();
     }
 
-    public void addAnnouncement(String message){
+    public synchronized void addAnnouncement(String message){
         Announcement announcement = new Announcement(announcements.size() + 1, message, this.clientNumber);
         this.announcements.add(announcement);
         System.out.println("\nOn client" + clientNumber + "'s board:"+ announcement.printAnnouncement());
