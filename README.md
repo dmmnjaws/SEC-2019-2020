@@ -60,5 +60,7 @@ Extra:
 DISCUSSÃO COM O PROFESSOR:
 
 // FEITO em vez de guardar o estado do cliente com o sequence number, pedir o sequence number ao servidor antes de se juntar.
+
 O que acontece se o servidor crasha no meio da escrita, ver isso.
+
 RELATÓRIO: esquecer a introdução, o indice e a API; emfase nos ataques que evitamos e como.
