@@ -18,19 +18,22 @@ public class ServerInit {
 
     public static void main( String[] args ) {
 
-        System.out.println( "\nHello World!" );
+        System.out.println( "\nInsert the number of servers:" );
+        int nServers = Integer.parseInt(System.console().readLine());
+        System.out.println( "\nInsert the port number for this server.");
+        int serverPort = Integer.parseInt(System.console().readLine());
 
-        ServerInit server = new ServerInit(7654);
+        ServerInit server = new ServerInit(serverPort, nServers);
 
         while(true){
         }
 
     }
 
-    public ServerInit(int server_port){
+    public ServerInit(int server_port, int nServers){
 
         try {
-            this.server = new Server();
+            this.server = new Server(server_port, nServers);
             this.stub = (ClientAPI) UnicastRemoteObject.exportObject(server, server_port);
             this.registry = LocateRegistry.createRegistry(server_port);
             registry.rebind("localhost:" + String.valueOf(server_port) + "/ClientAPI", stub);

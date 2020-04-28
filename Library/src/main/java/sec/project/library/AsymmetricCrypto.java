@@ -1,7 +1,5 @@
 package sec.project.library;
 
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -23,23 +21,6 @@ import javax.crypto.NoSuchPaddingException;
 
 
 public class AsymmetricCrypto {
-
-    public static String encryptText(String msg, Key key) throws NoSuchAlgorithmException, NoSuchPaddingException,
-            UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
-
-        Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.ENCRYPT_MODE, key);
-        return Base64.encode(cipher.doFinal(msg.getBytes("UTF-8")));
-
-    }
-
-    public static String decryptText(String msg, Key key) throws InvalidKeyException, UnsupportedEncodingException,
-            IllegalBlockSizeException, BadPaddingException, NoSuchPaddingException, NoSuchAlgorithmException {
-
-        Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.DECRYPT_MODE, key);
-        return new String(cipher.doFinal(Base64.decode(msg)), "UTF-8");
-    }
 
     public static byte [] wrapDigitalSignature(String msg, PrivateKey senderPrivateKey) throws
             NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException,

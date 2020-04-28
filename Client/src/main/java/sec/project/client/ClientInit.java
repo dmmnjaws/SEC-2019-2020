@@ -5,6 +5,9 @@ import sec.project.library.ClientAPI;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Hello world!
@@ -13,26 +16,32 @@ import java.security.*;
 public class ClientInit {
 
     private static Registry registry;
-    private static ClientAPI stub;
+    private static Map<Integer, ClientAPI> stubs;
     private static Client client;
 
     public static void main( String[] args ) {
 
-        System.out.println( "\nHello World!" );
-        ClientInit clientInit = new ClientInit(7654);
+        System.out.println( "\nInsert the ports of known servers separated by ',': " );
+        String ports = System.console().readLine();
+        String[] portsArray = ports.split(",");
+        stubs = new HashMap<>();
+        ClientInit clientInit = new ClientInit(portsArray);
 
         while(true){
         }
 
     }
 
-    public ClientInit(int server_port){
+    public ClientInit(String[] portsArray){
 
         try {
 
-            this.registry = LocateRegistry.getRegistry(server_port);
-            this.stub = (ClientAPI) registry.lookup("localhost:" + String.valueOf(server_port) + "/ClientAPI");
-            this.client = new Client(stub);
+            for(int i = 0; i < portsArray.length; i++){
+                this.registry = LocateRegistry.getRegistry(Integer.parseInt(portsArray[i]));
+                this.stubs.put(Integer.parseInt(portsArray[i]), (ClientAPI) registry.lookup("localhost:" + portsArray[i] + "/ClientAPI"));
+            }
+            this.client = new Client(stubs);
+
             System.err.println( "\nClient ready." );
             client.execute();
 

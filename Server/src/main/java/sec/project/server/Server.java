@@ -14,28 +14,27 @@ import java.util.*;
 
 public class Server implements ClientAPI {
 
+    private int nServers;
     private KeyStore serverKeyStore;
     private PrivateKey serverPrivateKey;
     private PublicKey serverPublicKey;
-    private String serverNumber;
     private Map<PublicKey, ClientLibrary> clientList;
     private GeneralBoard generalBoard;
 
     private Scanner scanner;
 
-    public Server (){
+    public Server (int serverPort, int nServers){
 
+        this.nServers = nServers;
         this.scanner = new Scanner(System.in);
-        System.out.println("\nInsert the server number:");
-        this.serverNumber = scanner.nextLine();
 
         try {
 
             loadState();
 
-            this.serverKeyStore = AsymmetricCrypto.getKeyStore("data/keys/server" + this.serverNumber + "_keystore.jks", "server" + this.serverNumber + "password");
-            this.serverPrivateKey = AsymmetricCrypto.getPrivateKey(this.serverKeyStore, "server" + this.serverNumber + "password", "server" + this.serverNumber);
-            this.serverPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/server" + this.serverNumber + "_certificate.crt");
+            this.serverKeyStore = AsymmetricCrypto.getKeyStore("data/keys/server" + serverPort + "_keystore.jks", "server" + serverPort + "password");
+            this.serverPrivateKey = AsymmetricCrypto.getPrivateKey(this.serverKeyStore, "server" + serverPort + "password", "server" + serverPort);
+            this.serverPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/server" + serverPort + "_certificate.crt");
 
         } catch (Exception e) {
 
@@ -85,6 +84,7 @@ public class Server implements ClientAPI {
 
     @Override
     public void register(PublicKey clientPublicKey, String clientNumber, byte [] signature) throws RemoteException {
+
         try{
             System.out.println("\n-------------------------------------------------------------\n" +
                     "client" + clientNumber + " called register() method.");
