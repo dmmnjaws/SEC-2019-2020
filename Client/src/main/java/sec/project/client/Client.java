@@ -19,6 +19,7 @@ public class Client {
     private String keyStorePassword;
     private String privateKeyPassword;
     private int seqNumber;
+    private int postWts;
 
     public Client (Map<Integer, ClientAPI> stubs) {
 
@@ -84,6 +85,7 @@ public class Client {
                         }
 
                         this.seqNumber = 1;
+                        this.postWts = 0;
 
                         System.out.println("\nSuccessful registration.");
                         break;
@@ -100,10 +102,23 @@ public class Client {
                         System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
                         message += scanner.nextLine();
 
-                        signature = AsymmetricCrypto.wrapDigitalSignature(message + this.seqNumber, this.clientPrivateKey);
+                        this.postWts++;
+
+                        ArrayList<Acknowledge> acknowledges = new ArrayList<>();
+
+                        signature = AsymmetricCrypto.wrapDigitalSignature(message + this.seqNumber + this.postWts, this.clientPrivateKey);
 
                         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
-                            entry.getValue().post(this.clientPublicKey, message, this.seqNumber, signature);
+                            Acknowledge acknowledge = entry.getValue().post(this.clientPublicKey, message, this.seqNumber, this.postWts, signature);
+
+                            if (acknowledge.getSeqNumber() == this.seqNumber){
+                                acknowledges.add(acknowledge);
+                            }
+
+                            // if (#ACK >= (N + f) / 2 (int, rounded down) with f = (N / 3) (int, rounded down)
+                            if (acknowledges.size() >= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){
+                                acknowledges = new ArrayList<>();
+                            }
                         }
 
                         this.seqNumber++;

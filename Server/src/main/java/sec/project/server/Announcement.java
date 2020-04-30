@@ -1,19 +1,21 @@
 package sec.project.server;
 
+import org.javatuples.Triplet;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
 public class Announcement implements Serializable {
-    private String info;
     private int id;
     private ArrayList<Integer> references;
-    private String clientNumber;
+    private String info;
+    private byte[] signature;
 
-    public Announcement(int number, String message, String clientNumber){
-        this.clientNumber = clientNumber;
+    public Announcement(int number, String message, byte[] signature){
+        this.info = message;
         this.id = number;
+        this.signature = signature;
         this.references = new ArrayList<>();
-        this.info = message.substring(0,message.indexOf("|"));
         String [] ref = message.substring(message.indexOf("|")+1, message.length()).split(" ");
 
         for(int i=1; i<ref.length; i++){
@@ -40,11 +42,9 @@ public class Announcement implements Serializable {
         return this.id;
     }
 
-    public String getClientNumber() {
-        return this.clientNumber;
-    }
-
     public String getInfo() {
         return this.info;
     }
+    public byte[] getSignature() { return this.signature; }
+
 }
