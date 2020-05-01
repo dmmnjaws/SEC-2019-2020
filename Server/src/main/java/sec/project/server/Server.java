@@ -119,6 +119,7 @@ public class Server implements ClientAPI {
             System.out.println("\n-------------------------------------------------------------\n" +
                     "client" + clientList.get(clientPublicKey).getClientNumber() + " called post() method.");
 
+            System.out.println("DEBUG: Arriving Signature: " + signature);
             String ack = this.clientList.get(clientPublicKey).write(wts, message, signature);
             saveState();
             return new Acknowledge(wts, ack, AsymmetricCrypto.wrapDigitalSignature(ack + wts, this.serverPrivateKey));
@@ -200,7 +201,7 @@ public class Server implements ClientAPI {
                     "A client called the read() method to read client" + clientList.get(toReadClientPublicKey).getClientNumber() + "'s announcements.");
 
             ArrayList<Triplet<Integer, String, byte[]>> triplets = this.clientList.get(toReadClientPublicKey).read(number, rid, signature, clientPublicKey);
-            return new ReadView(triplets, rid, AsymmetricCrypto.wrapDigitalSignature(triplets.toString() + rid, this.serverPrivateKey));
+            return new ReadView(triplets, rid, AsymmetricCrypto.wrapDigitalSignature(AsymmetricCrypto.transformTripletToString(triplets) + rid, this.serverPrivateKey));
 
             //if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, toReadClientPublicKey.toString() + number + seqNumber)
             //        & clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
@@ -269,7 +270,7 @@ public class Server implements ClientAPI {
     public Acknowledge login(PublicKey clientPublicKey) throws RemoteException {
 
         try {
-            String message = "" + this.clientList.get(clientPublicKey).getSeqNumber();
+            String message = "" + this.clientList.get(clientPublicKey).getOneNRegularRegister().getWts();
             return new Acknowledge(message, AsymmetricCrypto.wrapDigitalSignature(message, this.serverPrivateKey));
         } catch (Exception e) {
             e.printStackTrace();

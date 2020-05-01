@@ -42,9 +42,11 @@ public class OneNRegularRegister implements Serializable {
             this.valueTriplet = new Triplet<>(wts, value, signature);
             this.clientLibrary.addAnnouncement(this.valueTriplet);
             this.wts = wts;
+            return "ACK";
         }
 
-        return "ACK";
+        //merely representative, the method never returns this.
+        return "FAIL";
     }
 
     public ArrayList<Triplet<Integer, String, byte[]>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,

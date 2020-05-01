@@ -74,7 +74,7 @@ public class Client {
                         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
                             response = entry.getValue().login(this.clientPublicKey);
                             if (AsymmetricCrypto.validateDigitalSignature(response.getSignature(), entry.getKey(), response.getMessage())){
-                                this.seqNumber = Integer.parseInt(response.getMessage());
+                                this.postWts = Integer.parseInt(response.getMessage());
                             }
                         }
 
@@ -114,14 +114,16 @@ public class Client {
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postWts, this.clientPrivateKey);
 
                         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
+
+                            System.out.println("DEBUG: Departing Signature: " + signature);
                             Acknowledge acknowledge = entry.getValue().post(this.clientPublicKey, message, this.postWts, signature);
 
                             if (acknowledge.getWts() == this.postWts){
                                 acknowledges.add(acknowledge);
                             }
 
-                            // if (#ACK >= (N + f) / 2 (int, rounded down) with f = (N / 3) (int, rounded down)
-                            if (acknowledges.size() >= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){
+                            // if (#ACK > (N + f) / 2 (int, rounded down) with f = (N / 3) (int, rounded down)
+                            if (acknowledges.size() > (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){
                                 acknowledges = new ArrayList<>();
                                 break;
                             }
@@ -168,7 +170,7 @@ public class Client {
                                     AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString() + numberOfAnnouncements + this.rid, this.clientPrivateKey), this.clientPublicKey);
 
                             if(AsymmetricCrypto.validateDigitalSignature(readResponse.getSignature(), entry.getKey(),
-                                    readResponse.getAnnounces().toString() + readResponse.getRid()) && this.rid == readResponse.getRid()){
+                                    AsymmetricCrypto.transformTripletToString(readResponse.getAnnounces()) + readResponse.getRid()) && this.rid == readResponse.getRid()){
 
                                 boolean valid = true;
                                 for(Triplet<Integer, String, byte[]> announce : readResponse.getAnnounces()){

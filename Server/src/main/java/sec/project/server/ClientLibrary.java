@@ -33,6 +33,7 @@ public class ClientLibrary implements Serializable {
         this.announcements.add(announcement);
         incrementSeqNumber();
         System.out.println("\nOn client" + clientNumber + "'s board:"+ announcement.printAnnouncement());
+        System.out.println("\nDEBUG: Triplet: " + triplet.toString());
     }
 
     public String getAnnouncements(int number){
@@ -80,6 +81,8 @@ public class ClientLibrary implements Serializable {
     public PublicKey getClientPublicKey() {
         return this.clientPublicKey;
     }
+
+    public OneNRegularRegister getOneNRegularRegister() { return this.oneNRegularRegister; }
 
     public ArrayList<Announcement> getAnnouncements() {
         return this.announcements;
