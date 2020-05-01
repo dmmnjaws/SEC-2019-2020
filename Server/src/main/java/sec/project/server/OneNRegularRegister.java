@@ -11,6 +11,7 @@ import javax.crypto.NoSuchPaddingException;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.util.ArrayList;
 
 public class OneNRegularRegister {
@@ -30,12 +31,30 @@ public class OneNRegularRegister {
         this.wts = 0;
     }
 
-    public String write(int wts, int seqNumber, String value, byte[] signature) throws NoSuchPaddingException, UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
-        if (AsymmetricCrypto.validateDigitalSignature(signature, this.clientLibrary.getClientPublicKey(), value + seqNumber + wts) && seqNumber == this.clientLibrary.getSeqNumber() && wts > this.valueTriplet.getValue0()){
+    public String write(int wts, String value, byte[] signature) throws NoSuchPaddingException,
+            UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException,
+            InvalidKeyException {
+
+        if (AsymmetricCrypto.validateDigitalSignature(signature, this.clientLibrary.getClientPublicKey(),
+                value + wts) && wts > this.wts){
+
             this.valueTriplet = new Triplet<>(wts, value, signature);
-            this.clientLibrary.addAnnouncement(value, signature);
+            this.clientLibrary.addAnnouncement(value, wts, signature, this.valueTriplet);
             this.wts = wts;
         }
+
         return "ACK";
     }
+
+    public ArrayList<Triplet<Integer, String, byte[]>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
+            UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
+
+        if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,this.clientLibrary.getClientPublicKey().toString() + number + rid)){
+
+            return this.clientLibrary.getAnnouncementsTriplets(number);
+        }
+
+        return null;
+    }
+
 }

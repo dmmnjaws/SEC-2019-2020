@@ -1,5 +1,7 @@
 package sec.project.server;
 
+import org.javatuples.Triplet;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -26,8 +28,8 @@ public class ClientLibrary implements Serializable {
         this.oneNRegularRegister = new OneNRegularRegister(this);
     }
 
-    public synchronized void addAnnouncement(String message, byte[] signature){
-        Announcement announcement = new Announcement(announcements.size() + 1, message, signature);
+    public synchronized void addAnnouncement(String message, int wts, byte[] signature, Triplet<Integer, String, byte[]> triplet){
+        Announcement announcement = new Announcement(announcements.size() + 1, message, wts, signature, triplet);
         this.announcements.add(announcement);
         incrementSeqNumber();
         System.out.println("\nOn client" + clientNumber + "'s board:"+ announcement.printAnnouncement());
@@ -50,6 +52,23 @@ public class ClientLibrary implements Serializable {
         return print;
     }
 
+    public ArrayList<Triplet<Integer, String, byte[]>> getAnnouncementsTriplets(int number){
+        ArrayList<Triplet<Integer, String, byte[]>> result = new ArrayList<>();
+
+        if (number < announcements.size()) {
+            List<Announcement> resultAnnouncements = this.announcements.subList(announcements.size() - number, announcements.size());
+            for (Announcement announcement : resultAnnouncements){
+                result.add(announcement.getTriplet());
+            }
+        } else {
+            for (Announcement announcement : this.announcements){
+                result.add(announcement.getTriplet());
+            }
+        }
+
+        return result;
+    }
+
     public String getClientNumber(){
         return this.clientNumber;
     }
@@ -70,7 +89,15 @@ public class ClientLibrary implements Serializable {
         this.seqNumber++;
     }
 
-    public String write(int wts, int seqNumber, String message, byte[] signature) throws NoSuchPaddingException, UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
-        return this.oneNRegularRegister.write(wts, seqNumber, message, signature);
+    public String write(int wts, String message, byte[] signature) throws NoSuchPaddingException,
+            UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+
+        return this.oneNRegularRegister.write(wts, message, signature);
+    }
+
+    public ArrayList<Triplet<Integer, String, byte[]>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
+            UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+
+        return this.oneNRegularRegister.read(number, rid, signature, clientPublicKey);
     }
 }

@@ -9,12 +9,16 @@ public class Announcement implements Serializable {
     private int id;
     private ArrayList<Integer> references;
     private String info;
+    private int wts;
     private byte[] signature;
+    private Triplet<Integer, String , byte[]> triplet;
 
-    public Announcement(int number, String message, byte[] signature){
+    public Announcement(int number, String message, int wts, byte[] signature, Triplet<Integer, String, byte[]> triplet){
         this.info = message;
         this.id = number;
+        this.wts = wts;
         this.signature = signature;
+        this.triplet = triplet;
         this.references = new ArrayList<>();
         String [] ref = message.substring(message.indexOf("|")+1, message.length()).split(" ");
 
@@ -41,7 +45,8 @@ public class Announcement implements Serializable {
     public int getId() {
         return this.id;
     }
-
+    public int getWts() { return wts; }
+    public Triplet<Integer, String, byte[]> getTriplet() { return triplet; }
     public String getInfo() {
         return this.info;
     }

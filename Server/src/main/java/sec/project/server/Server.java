@@ -1,8 +1,10 @@
 package sec.project.server;
 
+import org.javatuples.Triplet;
 import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
+import sec.project.library.ReadView;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -111,15 +113,15 @@ public class Server implements ClientAPI {
     }
 
     @Override
-    public Acknowledge post(PublicKey clientPublicKey, String message, int seqNumber, int wts, byte [] signature) throws RemoteException {
+    public Acknowledge post(PublicKey clientPublicKey, String message, int wts, byte [] signature) throws RemoteException {
 
         try {
             System.out.println("\n-------------------------------------------------------------\n" +
                     "client" + clientList.get(clientPublicKey).getClientNumber() + " called post() method.");
 
-            String ack = this.clientList.get(clientPublicKey).write(wts, seqNumber, message, signature);
+            String ack = this.clientList.get(clientPublicKey).write(wts, message, signature);
             saveState();
-            return new Acknowledge(seqNumber, ack, AsymmetricCrypto.wrapDigitalSignature(ack, this.serverPrivateKey));
+            return new Acknowledge(wts, ack, AsymmetricCrypto.wrapDigitalSignature(ack + wts, this.serverPrivateKey));
 
             //if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, message + seqNumber)
             //        & clientList.get(clientPublicKey).getSeqNumber() == seqNumber) {
@@ -191,13 +193,14 @@ public class Server implements ClientAPI {
     }
 
     @Override
-    public Acknowledge read(PublicKey toReadClientPublicKey, int number, int seqNumber, byte[] signature, PublicKey clientPublicKey) throws RemoteException {
+    public ReadView read(PublicKey toReadClientPublicKey, int number, int rid , byte[] signature, PublicKey clientPublicKey) throws RemoteException {
 
         try{
             System.out.println("\n-------------------------------------------------------------\n" +
                     "A client called the read() method to read client" + clientList.get(toReadClientPublicKey).getClientNumber() + "'s announcements.");
 
-            
+            ArrayList<Triplet<Integer, String, byte[]>> triplets = this.clientList.get(toReadClientPublicKey).read(number, rid, signature, clientPublicKey);
+            return new ReadView(triplets, rid, AsymmetricCrypto.wrapDigitalSignature(triplets.toString() + rid, this.serverPrivateKey));
 
             //if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, toReadClientPublicKey.toString() + number + seqNumber)
             //        & clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
@@ -219,10 +222,9 @@ public class Server implements ClientAPI {
 
             //}
 
-
         } catch (NullPointerException e) {
-            System.out.println("\nClient is not registered!");
-            throw new RemoteException("\nClient not registered!");
+            System.out.println("\nInvalid Request!");
+            throw new RemoteException("\nInvalid Request!");
         } catch (Exception e){
             e.printStackTrace();
             throw new RemoteException("\nDecryption error");

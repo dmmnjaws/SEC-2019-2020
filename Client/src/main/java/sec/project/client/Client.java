@@ -1,8 +1,10 @@
 package sec.project.client;
 
+import org.javatuples.Triplet;
 import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
+import sec.project.library.ReadView;
 
 import java.io.*;
 import java.security.*;
@@ -20,6 +22,7 @@ public class Client {
     private String privateKeyPassword;
     private int seqNumber;
     private int postWts;
+    private int rid;
 
     public Client (Map<Integer, ClientAPI> stubs) {
 
@@ -61,6 +64,7 @@ public class Client {
             String numberOfAnnouncements;
             byte[] signature;
             Acknowledge response;
+            ArrayList<ReadView> readResponses = new ArrayList<>();
 
             try {
 
@@ -86,6 +90,7 @@ public class Client {
 
                         this.seqNumber = 1;
                         this.postWts = 0;
+                        this.rid = 0;
 
                         System.out.println("\nSuccessful registration.");
                         break;
@@ -106,22 +111,21 @@ public class Client {
 
                         ArrayList<Acknowledge> acknowledges = new ArrayList<>();
 
-                        signature = AsymmetricCrypto.wrapDigitalSignature(message + this.seqNumber + this.postWts, this.clientPrivateKey);
+                        signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postWts, this.clientPrivateKey);
 
                         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
-                            Acknowledge acknowledge = entry.getValue().post(this.clientPublicKey, message, this.seqNumber, this.postWts, signature);
+                            Acknowledge acknowledge = entry.getValue().post(this.clientPublicKey, message, this.postWts, signature);
 
-                            if (acknowledge.getSeqNumber() == this.seqNumber){
+                            if (acknowledge.getWts() == this.postWts){
                                 acknowledges.add(acknowledge);
                             }
 
                             // if (#ACK >= (N + f) / 2 (int, rounded down) with f = (N / 3) (int, rounded down)
                             if (acknowledges.size() >= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){
                                 acknowledges = new ArrayList<>();
+                                break;
                             }
                         }
-
-                        this.seqNumber++;
 
                         System.out.println("\nSuccessfully posted.");
                         break;
@@ -150,26 +154,56 @@ public class Client {
                         break;
 
                     case "read":
-                        
+
                         System.out.println("\nWrite the number of the client whose announcement board you want to read:");
                         PublicKey toReadClientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + scanner.nextLine() + "_certificate.crt");
 
                         System.out.println("\nHow many announcements do you want to see?");
                         numberOfAnnouncements = scanner.nextLine();
 
-                        for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()){
-                            response = entry.getValue().read(toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), this.seqNumber,
-                                    AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString() + numberOfAnnouncements + this.seqNumber, this.clientPrivateKey), this.clientPublicKey);
+                        this.rid++;
 
-                            if(AsymmetricCrypto.validateDigitalSignature(response.getSignature(), entry.getKey(), response.getMessage())){
-                                System.out.println(response.getMessage());
+                        for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()){
+                            ReadView readResponse = entry.getValue().read(toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), this.rid,
+                                    AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString() + numberOfAnnouncements + this.rid, this.clientPrivateKey), this.clientPublicKey);
+
+                            if(AsymmetricCrypto.validateDigitalSignature(readResponse.getSignature(), entry.getKey(),
+                                    readResponse.getAnnounces().toString() + readResponse.getRid()) && this.rid == readResponse.getRid()){
+
+                                boolean valid = true;
+                                for(Triplet<Integer,String,byte[]> announce : readResponse.getAnnounces()){
+                                    if(!(AsymmetricCrypto.validateDigitalSignature(announce.getValue2(),toReadClientPublicKey,
+                                            announce.getValue1() + announce.getValue0()))){
+                                        valid = false;
+                                    }
+                                }
+
+                                if(valid){
+                                    readResponses.add(readResponse);
+                                }
+
                             }else{
                                 System.out.println("\nInvalid Response from a server!");
                             }
 
                         }
 
-                        this.seqNumber++;
+                        int version = 0;
+                        ReadView mostUpdated = null;
+                        for(ReadView x : readResponses){
+                            int localVersion = x.getAnnounces().get(x.getAnnounces().size() - 1).getValue0();
+
+                            if (localVersion > version) {
+                                version = localVersion;
+                                mostUpdated = x;
+                            }
+                        }
+
+                        readResponses = new ArrayList<>();
+
+                        for(Triplet<Integer, String, byte[]> announce : mostUpdated.getAnnounces()){
+                            System.out.println(announce.getValue1());
+                        }
 
                         break;
 
