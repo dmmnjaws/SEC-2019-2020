@@ -8,13 +8,14 @@ import sec.project.library.AsymmetricCrypto;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.util.ArrayList;
 
-public class OneNRegularRegister {
+public class OneNRegularRegister implements Serializable {
 
     private Triplet <Integer, String, byte[]> valueTriplet;
     private ArrayList<Object> readList;
@@ -39,7 +40,7 @@ public class OneNRegularRegister {
                 value + wts) && wts > this.wts){
 
             this.valueTriplet = new Triplet<>(wts, value, signature);
-            this.clientLibrary.addAnnouncement(value, wts, signature, this.valueTriplet);
+            this.clientLibrary.addAnnouncement(this.valueTriplet);
             this.wts = wts;
         }
 
@@ -55,6 +56,26 @@ public class OneNRegularRegister {
         }
 
         return null;
+    }
+
+    public ArrayList<Object> getReadList() {
+        return this.readList;
+    }
+
+    public ClientLibrary getClientLibrary() {
+        return this.clientLibrary;
+    }
+
+    public int getRid() {
+        return this.rid;
+    }
+
+    public int getWts() {
+        return this.wts;
+    }
+
+    public Triplet<Integer, String, byte[]> getValueTriplet() {
+        return this.valueTriplet;
     }
 
 }

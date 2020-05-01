@@ -171,14 +171,14 @@ public class Client {
                                     readResponse.getAnnounces().toString() + readResponse.getRid()) && this.rid == readResponse.getRid()){
 
                                 boolean valid = true;
-                                for(Triplet<Integer,String,byte[]> announce : readResponse.getAnnounces()){
+                                for(Triplet<Integer, String, byte[]> announce : readResponse.getAnnounces()){
                                     if(!(AsymmetricCrypto.validateDigitalSignature(announce.getValue2(),toReadClientPublicKey,
                                             announce.getValue1() + announce.getValue0()))){
                                         valid = false;
                                     }
                                 }
 
-                                if(valid){
+                                if(valid && readResponse.getAnnounces().size() != 0){
                                     readResponses.add(readResponse);
                                 }
 
@@ -190,19 +190,25 @@ public class Client {
 
                         int version = 0;
                         ReadView mostUpdated = null;
-                        for(ReadView x : readResponses){
-                            int localVersion = x.getAnnounces().get(x.getAnnounces().size() - 1).getValue0();
 
-                            if (localVersion > version) {
-                                version = localVersion;
-                                mostUpdated = x;
+                        for(ReadView readView : readResponses){
+                            int receivedVersion = readView.getAnnounces().get(readView.getAnnounces().size() - 1).getValue0();
+
+                            if (receivedVersion > version) {
+                                version = receivedVersion;
+                                mostUpdated = readView;
                             }
                         }
 
                         readResponses = new ArrayList<>();
 
                         for(Triplet<Integer, String, byte[]> announce : mostUpdated.getAnnounces()){
-                            System.out.println(announce.getValue1());
+
+                            String originalMessage = announce.getValue1();
+                            String originalText = originalMessage.substring(0, originalMessage.indexOf("|"));
+                            String originalRefs = originalMessage.substring(originalMessage.indexOf("|")+1, originalMessage.length());
+
+                            System.out.println("\nAnnouncement id: "+ announce.getValue0() + "\n message: " + originalText + "\n references: " + originalRefs);
                         }
 
                         break;

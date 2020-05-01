@@ -28,8 +28,8 @@ public class ClientLibrary implements Serializable {
         this.oneNRegularRegister = new OneNRegularRegister(this);
     }
 
-    public synchronized void addAnnouncement(String message, int wts, byte[] signature, Triplet<Integer, String, byte[]> triplet){
-        Announcement announcement = new Announcement(announcements.size() + 1, message, wts, signature, triplet);
+    public synchronized void addAnnouncement(Triplet<Integer, String, byte[]> triplet){
+        Announcement announcement = new Announcement(announcements.size() + 1, triplet);
         this.announcements.add(announcement);
         incrementSeqNumber();
         System.out.println("\nOn client" + clientNumber + "'s board:"+ announcement.printAnnouncement());

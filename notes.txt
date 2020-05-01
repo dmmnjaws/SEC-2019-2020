@@ -1,1 +1,3 @@
 In our project we will not indicate an explicit value of f, f is infered from the number of replicas in a byzantine context. Therefore, for 4, 5 or 6 replicas, f=1, for 7, 8 or 9 replicas, f=2, and so on... 
+
+The sequence number is no longer needed for duplication check due to the use of wts and ack
