@@ -1,5 +1,6 @@
 package sec.project.client;
 
+import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
@@ -22,7 +23,9 @@ public class Client {
     private String privateKeyPassword;
     private int seqNumber;
     private int postWts;
-    private int rid;
+    private int postGeneralWts;
+    private int readRid;
+    private int readGeneralRid;
 
     public Client (Map<Integer, ClientAPI> stubs) {
 
@@ -65,6 +68,7 @@ public class Client {
             byte[] signature;
             Acknowledge response;
             ArrayList<ReadView> readResponses = new ArrayList<>();
+            ArrayList<ReadView> readResponsesGeneral = new ArrayList<>();
 
             try {
 
@@ -90,7 +94,9 @@ public class Client {
 
                         this.seqNumber = 1;
                         this.postWts = 0;
-                        this.rid = 0;
+                        this.postGeneralWts = 0;
+                        this.readRid = 0;
+                        this.readGeneralRid = 0;
 
                         System.out.println("\nSuccessful registration.");
                         break;
@@ -109,22 +115,21 @@ public class Client {
 
                         this.postWts++;
 
-                        ArrayList<Acknowledge> acknowledges = new ArrayList<>();
+                        ArrayList<Acknowledge> postAcknowledges = new ArrayList<>();
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postWts, this.clientPrivateKey);
 
                         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
 
-                            System.out.println("DEBUG: Departing Signature: " + signature);
                             Acknowledge acknowledge = entry.getValue().post(this.clientPublicKey, message, this.postWts, signature);
 
                             if (acknowledge.getWts() == this.postWts){
-                                acknowledges.add(acknowledge);
+                                postAcknowledges.add(acknowledge);
                             }
 
                             // if (#ACK > (N + f) / 2 (int, rounded down) with f = (N / 3) (int, rounded down)
-                            if (acknowledges.size() > (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){
-                                acknowledges = new ArrayList<>();
+                            if (postAcknowledges.size() > (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){
+                                postAcknowledges = new ArrayList<>();
                                 break;
                             }
                         }
@@ -144,13 +149,29 @@ public class Client {
                         System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
                         message += scanner.nextLine();
 
-                        signature = AsymmetricCrypto.wrapDigitalSignature(message + this.seqNumber, this.clientPrivateKey);
+                        this.postGeneralWts++;
+
+                        ArrayList<Acknowledge> postGeneralAcknowledges = new ArrayList<>();
+
+                        System.out.println(message + "|" + this.postGeneralWts + "|" + this.clientNumber + "|" );
+
+                        signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postGeneralWts + this.clientNumber, this.clientPrivateKey);
 
                         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
-                            entry.getValue().postGeneral(this.clientPublicKey, message, this.seqNumber, signature);
-                        }
 
-                        this.seqNumber++;
+                            Acknowledge acknowledge = entry.getValue().postGeneral(this.clientPublicKey, message, this.postGeneralWts, signature);
+
+                            if (acknowledge.getWts() == this.postGeneralWts){
+                                postGeneralAcknowledges.add(acknowledge);
+                            }
+
+                            // if (#ACK > (N + f) / 2 (int, rounded down) with f = (N / 3) (int, rounded down)
+                            if (postGeneralAcknowledges.size() > (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){
+                                postGeneralAcknowledges = new ArrayList<>();
+                                break;
+                            }
+
+                        }
 
                         System.out.println("\nSuccessfully posted.");
                         break;
@@ -163,14 +184,14 @@ public class Client {
                         System.out.println("\nHow many announcements do you want to see?");
                         numberOfAnnouncements = scanner.nextLine();
 
-                        this.rid++;
+                        this.readRid++;
 
                         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()){
-                            ReadView readResponse = entry.getValue().read(toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), this.rid,
-                                    AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString() + numberOfAnnouncements + this.rid, this.clientPrivateKey), this.clientPublicKey);
+                            ReadView readResponse = entry.getValue().read(toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), this.readRid,
+                                    AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString() + numberOfAnnouncements + this.readRid, this.clientPrivateKey), this.clientPublicKey);
 
                             if(AsymmetricCrypto.validateDigitalSignature(readResponse.getSignature(), entry.getKey(),
-                                    AsymmetricCrypto.transformTripletToString(readResponse.getAnnounces()) + readResponse.getRid()) && this.rid == readResponse.getRid()){
+                                    AsymmetricCrypto.transformTripletToString(readResponse.getAnnounces()) + readResponse.getRid()) && this.readRid == readResponse.getRid()){
 
                                 boolean valid = true;
                                 for(Triplet<Integer, String, byte[]> announce : readResponse.getAnnounces()){
@@ -220,20 +241,59 @@ public class Client {
                         System.out.println("\nHow many announcements do you want to see?");
                         numberOfAnnouncements = scanner.nextLine();
 
+                        this.readGeneralRid++;
+
                         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()){
 
-                            response = entry.getValue().readGeneral(Integer.parseInt(numberOfAnnouncements), this.seqNumber,
-                                    AsymmetricCrypto.wrapDigitalSignature(numberOfAnnouncements + this.seqNumber, this.clientPrivateKey), this.clientPublicKey);
+                            ReadView readGeneralResponse = entry.getValue().readGeneral(Integer.parseInt(numberOfAnnouncements), this.readGeneralRid,
+                                    AsymmetricCrypto.wrapDigitalSignature(numberOfAnnouncements + this.readGeneralRid, this.clientPrivateKey), this.clientPublicKey);
 
-                            if(AsymmetricCrypto.validateDigitalSignature(response.getSignature(), entry.getKey(), response.getMessage())){
-                                System.out.println(response.getMessage());
+                            if(AsymmetricCrypto.validateDigitalSignature(readGeneralResponse.getSignature(), entry.getKey(),
+                                    AsymmetricCrypto.transformQuartetToString(readGeneralResponse.getAnnouncesGeneral()) + readGeneralResponse.getRid()) && this.readGeneralRid == readGeneralResponse.getRid()){
+
+                                boolean valid = true;
+                                for(Quartet<Integer, String, String, byte[]> announce : readGeneralResponse.getAnnouncesGeneral()){
+
+                                    PublicKey clientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + announce.getValue2() + "_certificate.crt");
+
+                                    if(!(AsymmetricCrypto.validateDigitalSignature(announce.getValue3(), clientPublicKey,
+                                            announce.getValue1() + announce.getValue0() + announce.getValue2()))){
+                                        valid = false;
+                                    }
+                                }
+
+                                if(valid && readGeneralResponse.getAnnouncesGeneral().size() != 0){
+                                    readResponsesGeneral.add(readGeneralResponse);
+                                }
+
                             }else{
-                                System.out.println("Invalid Response!");
+                                System.out.println("Invalid Response from a server!");
                             }
 
                         }
 
-                        this.seqNumber++;
+                        int versionGeneral = 0;
+                        ReadView mostUpdatedGeneral = null;
+
+                        for(ReadView readView : readResponsesGeneral){
+                            int receivedVersion = readView.getAnnouncesGeneral().get(readView.getAnnouncesGeneral().size() - 1).getValue0();
+
+                            if (receivedVersion > versionGeneral) {
+                                versionGeneral = receivedVersion;
+                                mostUpdatedGeneral = readView;
+                            }
+                        }
+
+                        readResponsesGeneral = new ArrayList<>();
+
+                        for(Quartet<Integer, String, String, byte[]> announce : mostUpdatedGeneral.getAnnouncesGeneral()){
+
+                            String originalMessage = announce.getValue1();
+                            String originalText = originalMessage.substring(0, originalMessage.indexOf("|"));
+                            String originalRefs = originalMessage.substring(originalMessage.indexOf("|")+1, originalMessage.length());
+
+                            System.out.println("\nAnnouncement id: "+ announce.getValue0() + "\n message: " + originalText + "\n references: " + originalRefs);
+                        }
 
                         break;
 

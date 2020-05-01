@@ -15,19 +15,19 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.util.ArrayList;
 
-public class OneNRegularRegister implements Serializable {
+public class OneNAtomicRegister implements Serializable {
+
+    //THIS IS STILL A (1,N) REGULAR REGISTER, IT MUST BE TRANSFORMER INTO A (1,N) ATOMIC REGISTER
 
     private Triplet <Integer, String, byte[]> valueTriplet;
-    private ArrayList<Object> readList;
     private int wts;
     private int rid;
     private ClientLibrary clientLibrary;
 
     //Init()
-    public OneNRegularRegister(ClientLibrary clientLibrary){
+    public OneNAtomicRegister(ClientLibrary clientLibrary){
         this.clientLibrary = clientLibrary;
         this.valueTriplet = new Triplet<>(0, null, null);
-        this.readList = new ArrayList<>();
         this.rid = 0;
         this.wts = 0;
     }
@@ -58,10 +58,6 @@ public class OneNRegularRegister implements Serializable {
         }
 
         return null;
-    }
-
-    public ArrayList<Object> getReadList() {
-        return this.readList;
     }
 
     public ClientLibrary getClientLibrary() {

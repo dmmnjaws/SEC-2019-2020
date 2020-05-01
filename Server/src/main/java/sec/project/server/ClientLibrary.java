@@ -17,7 +17,7 @@ public class ClientLibrary implements Serializable {
     private int seqNumber;
     private String clientNumber;
     private ArrayList<Announcement> announcements;
-    private OneNRegularRegister oneNRegularRegister;
+    private OneNAtomicRegister oneNAtomicRegister;
     private PublicKey clientPublicKey;
 
     public ClientLibrary(String clientNumber, PublicKey clientPublicKey){
@@ -25,7 +25,7 @@ public class ClientLibrary implements Serializable {
         this.clientPublicKey = clientPublicKey;
         this.seqNumber = 1;
         this.announcements = new ArrayList<>();
-        this.oneNRegularRegister = new OneNRegularRegister(this);
+        this.oneNAtomicRegister = new OneNAtomicRegister(this);
     }
 
     public synchronized void addAnnouncement(Triplet<Integer, String, byte[]> triplet){
@@ -82,7 +82,7 @@ public class ClientLibrary implements Serializable {
         return this.clientPublicKey;
     }
 
-    public OneNRegularRegister getOneNRegularRegister() { return this.oneNRegularRegister; }
+    public OneNAtomicRegister getOneNRegularRegister() { return this.oneNAtomicRegister; }
 
     public ArrayList<Announcement> getAnnouncements() {
         return this.announcements;
@@ -95,12 +95,12 @@ public class ClientLibrary implements Serializable {
     public String write(int wts, String message, byte[] signature) throws NoSuchPaddingException,
             UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
 
-        return this.oneNRegularRegister.write(wts, message, signature);
+        return this.oneNAtomicRegister.write(wts, message, signature);
     }
 
     public ArrayList<Triplet<Integer, String, byte[]>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
             UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
 
-        return this.oneNRegularRegister.read(number, rid, signature, clientPublicKey);
+        return this.oneNAtomicRegister.read(number, rid, signature, clientPublicKey);
     }
 }

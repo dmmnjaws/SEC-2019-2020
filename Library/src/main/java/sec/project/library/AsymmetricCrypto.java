@@ -1,6 +1,7 @@
 package sec.project.library;
 
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 
 import java.io.FileInputStream;
@@ -112,6 +113,18 @@ public class AsymmetricCrypto {
 
         for (Triplet<Integer, String, byte[]> triplet : triplets){
             result += "" + triplet.getValue0() + triplet.getValue1() + new String(triplet.getValue2(), "UTF-8");
+
+        }
+
+        return result;
+    }
+
+    public static String transformQuartetToString(ArrayList<Quartet<Integer, String, String, byte[]>> quartets) throws UnsupportedEncodingException {
+
+        String result = "";
+
+        for (Quartet<Integer, String, String, byte[]> quartet : quartets){
+            result += "" + quartet.getValue0() + quartet.getValue1() + quartet.getValue2() + new String(quartet.getValue3(), "UTF-8");
 
         }
 
