@@ -2,16 +2,24 @@ package sec.project.library;
 
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Before;
 import org.junit.Test;
+
+import java.security.PrivateKey;
 
 /**
  * Unit test for simple App.
  */
-public class AppTest 
+public class AsymmetricCryptoTest
 {
-    /**
-     * Rigorous Test :-)
-     */
+
+    PrivateKey privatekey;
+
+    @Before
+    public void populateForTest(){
+
+    }
+
     @Test
     public void shouldAnswerWithTrue()
     {
