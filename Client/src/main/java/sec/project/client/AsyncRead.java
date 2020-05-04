@@ -15,16 +15,16 @@ public class AsyncRead implements Runnable {
 
     private Client client;
     private PublicKey toReadClientPublicKey;
-    private int numberOfAnnounces;
+    private int numberOfAnnouncements;
     private byte[] signature;
 
     //Runnable(this, toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), signature)
 
-    public AsyncRead(Client client, PublicKey toReadClientPublicKey, int numberOfAnnounces, byte[] signature){
+    public AsyncRead(Client client, PublicKey toReadClientPublicKey, int numberOfAnnouncements, byte[] signature){
         this.client = client;
         this.toReadClientPublicKey = toReadClientPublicKey;
         this.signature = signature;
-        this.numberOfAnnounces = numberOfAnnounces;
+        this.numberOfAnnouncements = numberOfAnnouncements;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class AsyncRead implements Runnable {
 
         try {
             for (Map.Entry<PublicKey, ClientAPI> entry : this.client.getServerPublicKeys().entrySet()) {
-                ReadView readResponse = entry.getValue().read(this.toReadClientPublicKey, this.numberOfAnnounces,
+                ReadView readResponse = entry.getValue().read(this.toReadClientPublicKey, this.numberOfAnnouncements,
                         rid, this.signature, this.client.getClientPublicKey());
 
                 if (AsymmetricCrypto.validateDigitalSignature(readResponse.getSignature(), entry.getKey(),

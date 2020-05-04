@@ -28,7 +28,9 @@ public class Client {
     private int readRid;
     private int readGeneralRid;
     private ArrayList<Acknowledge> postAcks;
+    private ArrayList<Acknowledge> postGeneralAcks;
     private ArrayList<ReadView> readResponses;
+    private ArrayList<ReadView> readGeneralResponses;
 
     public Client (Map<Integer, ClientAPI> stubs) {
 
@@ -143,27 +145,14 @@ public class Client {
 
                         this.postGeneralWts++;
 
-                        ArrayList<Acknowledge> postGeneralAcknowledges = new ArrayList<>();
-
-                        System.out.println(message + "|" + this.postGeneralWts + "|" + this.clientNumber + "|" );
+                        this.postGeneralAcks = new ArrayList<>();
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postGeneralWts + this.clientNumber, this.clientPrivateKey);
 
-                        for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
+                        AsyncPostGeneral postGeneral = new AsyncPostGeneral(this, message, signature);
+                        new Thread(postGeneral).start();
 
-                            Acknowledge acknowledge = entry.getValue().postGeneral(this.clientPublicKey, message, this.postGeneralWts, signature);
-
-                            if (acknowledge.getWts() == this.postGeneralWts){
-                                postGeneralAcknowledges.add(acknowledge);
-                            }
-
-                            // if (#ACK > (N + f) / 2 (int, rounded down) with f = (N / 3) (int, rounded down)
-                            if (postGeneralAcknowledges.size() > (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){
-                                postGeneralAcknowledges = new ArrayList<>();
-                                break;
-                            }
-
-                        }
+                        while(this.postGeneralAcks.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){}
 
                         System.out.println("\nSuccessfully posted.");
                         break;
@@ -177,6 +166,7 @@ public class Client {
                         numberOfAnnouncements = scanner.nextLine();
 
                         this.readRid++;
+
                         this.readResponses = new ArrayList<>();
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString()
@@ -217,39 +207,17 @@ public class Client {
 
                         this.readGeneralRid++;
 
-                        for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()){
+                        this.readGeneralResponses = new ArrayList<>();
 
-                            ReadView readGeneralResponse = entry.getValue().readGeneral(Integer.parseInt(numberOfAnnouncements), this.readGeneralRid,
-                                    AsymmetricCrypto.wrapDigitalSignature(numberOfAnnouncements + this.readGeneralRid, this.clientPrivateKey), this.clientPublicKey);
+                        signature = AsymmetricCrypto.wrapDigitalSignature(numberOfAnnouncements + this.readGeneralRid, this.clientPrivateKey);
 
-                            if(AsymmetricCrypto.validateDigitalSignature(readGeneralResponse.getSignature(), entry.getKey(),
-                                    AsymmetricCrypto.transformQuartetToString(readGeneralResponse.getAnnouncesGeneral()) + readGeneralResponse.getRid()) && this.readGeneralRid == readGeneralResponse.getRid()){
-
-                                boolean valid = true;
-                                for(Quartet<Integer, String, String, byte[]> announce : readGeneralResponse.getAnnouncesGeneral()){
-
-                                    PublicKey clientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + announce.getValue2() + "_certificate.crt");
-
-                                    if(!(AsymmetricCrypto.validateDigitalSignature(announce.getValue3(), clientPublicKey,
-                                            announce.getValue1() + announce.getValue0() + announce.getValue2()))){
-                                        valid = false;
-                                    }
-                                }
-
-                                if(valid && readGeneralResponse.getAnnouncesGeneral().size() != 0){
-                                    readResponsesGeneral.add(readGeneralResponse);
-                                }
-
-                            }else{
-                                System.out.println("Invalid Response from a server!");
-                            }
-
-                        }
+                        AsyncReadGeneral readGeneral = new AsyncReadGeneral(this, Integer.parseInt(numberOfAnnouncements), signature);
+                        new Thread(readGeneral).start();
 
                         int versionGeneral = 0;
                         ReadView mostUpdatedGeneral = null;
 
-                        for(ReadView readView : readResponsesGeneral){
+                        for(ReadView readView : this.readGeneralResponses){
                             int receivedVersion = readView.getAnnouncesGeneral().get(readView.getAnnouncesGeneral().size() - 1).getValue0();
 
                             if (receivedVersion > versionGeneral) {
@@ -257,8 +225,6 @@ public class Client {
                                 mostUpdatedGeneral = readView;
                             }
                         }
-
-                        readResponsesGeneral = new ArrayList<>();
 
                         for(Quartet<Integer, String, String, byte[]> announce : mostUpdatedGeneral.getAnnouncesGeneral()){
 
@@ -315,10 +281,14 @@ public class Client {
     }
 
     public int getPostWts() { return postWts; }
+    public int getPostGeneralWts() { return postGeneralWts; }
     public int getReadRid() { return readRid; }
+    public int getReadGeneralRid() { return readGeneralRid; }
     public Map<PublicKey, ClientAPI> getServerPublicKeys() { return serverPublicKeys; }
     public PublicKey getClientPublicKey() { return clientPublicKey; }
     public ArrayList<Acknowledge> getPostAcks() { return postAcks; }
+    public ArrayList<Acknowledge> getPostGeneralAcks() { return postGeneralAcks; }
     public ArrayList<ReadView> getReadResponses() { return readResponses; }
+    public ArrayList<ReadView> getReadGeneralResponses() { return readGeneralResponses; }
 
 }
