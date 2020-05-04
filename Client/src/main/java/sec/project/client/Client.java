@@ -126,7 +126,7 @@ public class Client {
                         AsyncPost post = new AsyncPost(this, message, signature);
                         new Thread(post).start();
 
-                        while (this.postAcks.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        while (this.postAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
                         }
 
                         System.out.println("\nSuccessfully posted.");
@@ -153,7 +153,7 @@ public class Client {
                         AsyncPostGeneral postGeneral = new AsyncPostGeneral(this, message, signature);
                         new Thread(postGeneral).start();
 
-                        while (this.postGeneralAcks.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        while (this.postGeneralAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
                         }
 
                         System.out.println("\nSuccessfully posted.");
@@ -177,7 +177,7 @@ public class Client {
                         AsyncRead read = new AsyncRead(this, toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), signature);
                         new Thread(read).start();
 
-                        while (this.readResponses.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {}
+                        while (this.readResponses.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {}
 
                         Map<Integer, Triplet<Integer, String, byte[]>> announcements = new HashMap<>();
 
@@ -198,7 +198,14 @@ public class Client {
                             }
                         }
 
-                        for (int i = maxWts - numberOfAnnoucesServer + 1; i <= maxWts; i++) {
+                        int aux;
+                        if(numberOfAnnoucesServer < Integer.parseInt(numberOfAnnouncements)){
+                            aux = numberOfAnnoucesServer;
+                        }else{
+                            aux = Integer.parseInt(numberOfAnnouncements);
+                        }
+
+                        for (int i = maxWts - aux + 1; i <= maxWts; i++) {
                             String originalMessage = announcements.get(i).getValue1();
                             String originalText = originalMessage.substring(0, originalMessage.indexOf("|"));
                             String originalRefs = originalMessage.substring(originalMessage.indexOf("|") + 1, originalMessage.length());
@@ -222,7 +229,7 @@ public class Client {
                         AsyncReadGeneral readGeneral = new AsyncReadGeneral(this, Integer.parseInt(numberOfAnnouncements), signature);
                         new Thread(readGeneral).start();
 
-                        while (this.readGeneralResponses.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        while (this.readGeneralResponses.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
                         }
 
                         int versionGeneral = 0;
