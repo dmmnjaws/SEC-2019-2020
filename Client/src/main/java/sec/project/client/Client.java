@@ -1,5 +1,6 @@
 package sec.project.client;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 import sec.project.library.Acknowledge;
@@ -26,6 +27,8 @@ public class Client {
     private int postGeneralWts;
     private int readRid;
     private int readGeneralRid;
+    private ArrayList<Acknowledge> postAcks;
+    private ArrayList<ReadView> readResponses;
 
     public Client (Map<Integer, ClientAPI> stubs) {
 
@@ -67,7 +70,6 @@ public class Client {
             String numberOfAnnouncements;
             byte[] signature;
             Acknowledge response;
-            ArrayList<ReadView> readResponses = new ArrayList<>();
             ArrayList<ReadView> readResponsesGeneral = new ArrayList<>();
 
             try {
@@ -115,24 +117,14 @@ public class Client {
 
                         this.postWts++;
 
-                        ArrayList<Acknowledge> postAcknowledges = new ArrayList<>();
+                        this.postAcks = new ArrayList<>();
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postWts, this.clientPrivateKey);
 
-                        for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
+                        AsyncPost post = new AsyncPost(this, message, signature);
+                        new Thread(post).start();
 
-                            Acknowledge acknowledge = entry.getValue().post(this.clientPublicKey, message, this.postWts, signature);
-
-                            if (acknowledge.getWts() == this.postWts){
-                                postAcknowledges.add(acknowledge);
-                            }
-
-                            // if (#ACK > (N + f) / 2 (int, rounded down) with f = (N / 3) (int, rounded down)
-                            if (postAcknowledges.size() > (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){
-                                postAcknowledges = new ArrayList<>();
-                                break;
-                            }
-                        }
+                        while(this.postAcks.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){}
 
                         System.out.println("\nSuccessfully posted.");
                         break;
@@ -185,36 +177,20 @@ public class Client {
                         numberOfAnnouncements = scanner.nextLine();
 
                         this.readRid++;
+                        this.readResponses = new ArrayList<>();
 
-                        for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()){
-                            ReadView readResponse = entry.getValue().read(toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), this.readRid,
-                                    AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString() + numberOfAnnouncements + this.readRid, this.clientPrivateKey), this.clientPublicKey);
+                        signature = AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString()
+                                + numberOfAnnouncements + this.readRid, this.clientPrivateKey);
 
-                            if(AsymmetricCrypto.validateDigitalSignature(readResponse.getSignature(), entry.getKey(),
-                                    AsymmetricCrypto.transformTripletToString(readResponse.getAnnounces()) + readResponse.getRid()) && this.readRid == readResponse.getRid()){
+                        AsyncRead read = new AsyncRead(this, toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), signature);
+                        new Thread(read).start();
 
-                                boolean valid = true;
-                                for(Triplet<Integer, String, byte[]> announce : readResponse.getAnnounces()){
-                                    if(!(AsymmetricCrypto.validateDigitalSignature(announce.getValue2(),toReadClientPublicKey,
-                                            announce.getValue1() + announce.getValue0()))){
-                                        valid = false;
-                                    }
-                                }
-
-                                if(valid && readResponse.getAnnounces().size() != 0){
-                                    readResponses.add(readResponse);
-                                }
-
-                            }else{
-                                System.out.println("\nInvalid Response from a server!");
-                            }
-
-                        }
+                        while(this.readResponses.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){}
 
                         int version = 0;
                         ReadView mostUpdated = null;
 
-                        for(ReadView readView : readResponses){
+                        for(ReadView readView : this.readResponses){
                             int receivedVersion = readView.getAnnounces().get(readView.getAnnounces().size() - 1).getValue0();
 
                             if (receivedVersion > version) {
@@ -222,8 +198,6 @@ public class Client {
                                 mostUpdated = readView;
                             }
                         }
-
-                        readResponses = new ArrayList<>();
 
                         for(Triplet<Integer, String, byte[]> announce : mostUpdated.getAnnounces()){
 
@@ -339,4 +313,12 @@ public class Client {
         }
 
     }
+
+    public int getPostWts() { return postWts; }
+    public int getReadRid() { return readRid; }
+    public Map<PublicKey, ClientAPI> getServerPublicKeys() { return serverPublicKeys; }
+    public PublicKey getClientPublicKey() { return clientPublicKey; }
+    public ArrayList<Acknowledge> getPostAcks() { return postAcks; }
+    public ArrayList<ReadView> getReadResponses() { return readResponses; }
+
 }

@@ -24,12 +24,9 @@ public class Server implements ClientAPI {
     private Map<PublicKey, ClientLibrary> clientList;
     private GeneralBoard generalBoard;
 
-    private Scanner scanner;
-
     public Server (int serverPort, int nServers){
 
         this.nServers = nServers;
-        this.scanner = new Scanner(System.in);
 
         try {
 
