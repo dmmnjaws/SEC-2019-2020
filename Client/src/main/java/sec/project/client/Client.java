@@ -81,7 +81,7 @@ public class Client {
 
                         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
                             response = entry.getValue().login(this.clientPublicKey);
-                            if (AsymmetricCrypto.validateDigitalSignature(response.getSignature(), entry.getKey(), response.getMessage())){
+                            if (AsymmetricCrypto.validateDigitalSignature(response.getSignature(), entry.getKey(), response.getMessage())) {
                                 this.postWts = Integer.parseInt(response.getMessage());
                             }
                         }
@@ -126,7 +126,8 @@ public class Client {
                         AsyncPost post = new AsyncPost(this, message, signature);
                         new Thread(post).start();
 
-                        while(this.postAcks.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){}
+                        while (this.postAcks.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        }
 
                         System.out.println("\nSuccessfully posted.");
                         break;
@@ -152,7 +153,8 @@ public class Client {
                         AsyncPostGeneral postGeneral = new AsyncPostGeneral(this, message, signature);
                         new Thread(postGeneral).start();
 
-                        while(this.postGeneralAcks.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){}
+                        while (this.postGeneralAcks.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        }
 
                         System.out.println("\nSuccessfully posted.");
                         break;
@@ -175,27 +177,33 @@ public class Client {
                         AsyncRead read = new AsyncRead(this, toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), signature);
                         new Thread(read).start();
 
-                        while(this.readResponses.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){
-                            Thread.sleep(1000);
-                        }
+                        while (this.readResponses.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {}
 
-                        Map<Integer, Triplet<Integer, String, byte[]>> announcements = new TreeMap<>(Collections.reverseOrder());
+                        Map<Integer, Triplet<Integer, String, byte[]>> announcements = new HashMap<>();
 
-                        for(ReadView readView : this.readResponses){
-                            for(Triplet<Integer, String, byte[]> triplet : readView.getAnnounces()){
-                                announcements.put(triplet.getValue0(), triplet);
+                        int maxWts = 0;
+                        int numberOfAnnoucesServer = 0;
+                        for (ReadView readView : this.readResponses) {
+                            for (Triplet<Integer, String, byte[]> triplet : readView.getAnnounces()) {
+
+                                if (maxWts < triplet.getValue0()) {
+                                    maxWts = triplet.getValue0();
+                                }
+
+                                if(!announcements.containsKey(triplet.getValue0())) {
+                                    announcements.put(triplet.getValue0(), triplet);
+                                    numberOfAnnoucesServer++;
+                                }
+
                             }
                         }
 
-                        int i = 0;
-                        for (Map.Entry entry : announcements.entrySet()) {
-                            if (i++ < Integer.parseInt(numberOfAnnouncements)) {
-                                String originalMessage = ((Triplet<Integer, String, byte[]>) entry.getValue()).getValue1();
-                                String originalText = originalMessage.substring(0, originalMessage.indexOf("|"));
-                                String originalRefs = originalMessage.substring(originalMessage.indexOf("|")+1, originalMessage.length());
+                        for (int i = maxWts - numberOfAnnoucesServer + 1; i <= maxWts; i++) {
+                            String originalMessage = announcements.get(i).getValue1();
+                            String originalText = originalMessage.substring(0, originalMessage.indexOf("|"));
+                            String originalRefs = originalMessage.substring(originalMessage.indexOf("|") + 1, originalMessage.length());
 
-                                System.out.println("\nAnnouncement id: "+ ((Triplet<Integer, String, byte[]>) entry.getValue()).getValue0() + "\n message: " + originalText + "\n references: " + originalRefs);
-                            }
+                            System.out.println("\nAnnouncement id: " + announcements.get(i).getValue0() + "\n message: " + originalText + "\n references: " + originalRefs);
                         }
 
                         break;
@@ -214,12 +222,13 @@ public class Client {
                         AsyncReadGeneral readGeneral = new AsyncReadGeneral(this, Integer.parseInt(numberOfAnnouncements), signature);
                         new Thread(readGeneral).start();
 
-                        while(this.readGeneralResponses.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){}
+                        while (this.readGeneralResponses.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        }
 
                         int versionGeneral = 0;
                         ReadView mostUpdatedGeneral = null;
 
-                        for(ReadView readView : this.readGeneralResponses){
+                        for (ReadView readView : this.readGeneralResponses) {
                             int receivedVersion = readView.getAnnouncesGeneral().get(readView.getAnnouncesGeneral().size() - 1).getValue0();
 
                             if (receivedVersion > versionGeneral) {
@@ -228,13 +237,13 @@ public class Client {
                             }
                         }
 
-                        for(Quartet<Integer, String, String, byte[]> announce : mostUpdatedGeneral.getAnnouncesGeneral()){
+                        for (Quartet<Integer, String, String, byte[]> announce : mostUpdatedGeneral.getAnnouncesGeneral()) {
 
                             String originalMessage = announce.getValue1();
                             String originalText = originalMessage.substring(0, originalMessage.indexOf("|"));
-                            String originalRefs = originalMessage.substring(originalMessage.indexOf("|")+1, originalMessage.length());
+                            String originalRefs = originalMessage.substring(originalMessage.indexOf("|") + 1, originalMessage.length());
 
-                            System.out.println("\nAnnouncement id: "+ announce.getValue0() + "\n message: " + originalText + "\n references: " + originalRefs);
+                            System.out.println("\nAnnouncement id: " + announce.getValue0() + "\n message: " + originalText + "\n references: " + originalRefs);
                         }
 
                         break;
