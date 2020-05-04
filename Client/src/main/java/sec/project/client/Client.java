@@ -175,27 +175,27 @@ public class Client {
                         AsyncRead read = new AsyncRead(this, toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), signature);
                         new Thread(read).start();
 
-                        while(this.readResponses.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){}
+                        while(this.readResponses.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){
+                            Thread.sleep(1000);
+                        }
 
-                        int version = 0;
-                        ReadView mostUpdated = null;
+                        Map<Integer, Triplet<Integer, String, byte[]>> announcements = new TreeMap<>(Collections.reverseOrder());
 
                         for(ReadView readView : this.readResponses){
-                            int receivedVersion = readView.getAnnounces().get(readView.getAnnounces().size() - 1).getValue0();
-
-                            if (receivedVersion > version) {
-                                version = receivedVersion;
-                                mostUpdated = readView;
+                            for(Triplet<Integer, String, byte[]> triplet : readView.getAnnounces()){
+                                announcements.put(triplet.getValue0(), triplet);
                             }
                         }
 
-                        for(Triplet<Integer, String, byte[]> announce : mostUpdated.getAnnounces()){
+                        int i = 0;
+                        for (Map.Entry entry : announcements.entrySet()) {
+                            if (i++ < Integer.parseInt(numberOfAnnouncements)) {
+                                String originalMessage = ((Triplet<Integer, String, byte[]>) entry.getValue()).getValue1();
+                                String originalText = originalMessage.substring(0, originalMessage.indexOf("|"));
+                                String originalRefs = originalMessage.substring(originalMessage.indexOf("|")+1, originalMessage.length());
 
-                            String originalMessage = announce.getValue1();
-                            String originalText = originalMessage.substring(0, originalMessage.indexOf("|"));
-                            String originalRefs = originalMessage.substring(originalMessage.indexOf("|")+1, originalMessage.length());
-
-                            System.out.println("\nAnnouncement id: "+ announce.getValue0() + "\n message: " + originalText + "\n references: " + originalRefs);
+                                System.out.println("\nAnnouncement id: "+ ((Triplet<Integer, String, byte[]>) entry.getValue()).getValue0() + "\n message: " + originalText + "\n references: " + originalRefs);
+                            }
                         }
 
                         break;
