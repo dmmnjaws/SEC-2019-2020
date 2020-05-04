@@ -214,6 +214,8 @@ public class Client {
                         AsyncReadGeneral readGeneral = new AsyncReadGeneral(this, Integer.parseInt(numberOfAnnouncements), signature);
                         new Thread(readGeneral).start();
 
+                        while(this.readGeneralResponses.size() < (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){}
+
                         int versionGeneral = 0;
                         ReadView mostUpdatedGeneral = null;
 
