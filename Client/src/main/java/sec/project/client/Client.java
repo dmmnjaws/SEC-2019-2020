@@ -74,6 +74,11 @@ public class Client {
 
     public void execute() {
 
+        this.postAcks = new ArrayList<>();
+        this.postGeneralAcks = new ArrayList<>();
+        this.readResponses = new ArrayList<>();
+        this.readGeneralResponses = new ArrayList<>();
+
         while (true) {
 
             System.out.println("\n-------------------------------------------------------------\n" + "Write a command:");
@@ -149,9 +154,9 @@ public class Client {
                         seconds = 0;
                         while (this.postAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
-                            Thread.sleep(500);
+                            Thread.sleep(10);
                             seconds++;
-                            if (seconds > 19){
+                            if (seconds > 1000){
                                 System.out.println("TIMEOUT: Wasn't able to finish post operation.");
                                 break;
                             }
@@ -185,9 +190,9 @@ public class Client {
                         seconds = 0;
                         while (this.postGeneralAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
-                            Thread.sleep(500);
+                            Thread.sleep(10);
                             seconds++;
-                            if (seconds > 19){
+                            if (seconds > 1000){
                                 System.out.println("TIMEOUT: Wasn't able to finish postGeneral operation.");
                                 break;
                             }
@@ -218,9 +223,9 @@ public class Client {
                         seconds = 0;
                         while (this.readResponses.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
-                            Thread.sleep(500);
+                            Thread.sleep(10);
                             seconds++;
-                            if (seconds > 19){
+                            if (seconds > 1000){
                                 System.out.println("TIMEOUT: Wasn't able to finish read operation.");
                                 break;
                             }
@@ -255,16 +260,38 @@ public class Client {
 
                         for (int i = maxWts - aux + 1; i <= maxWts; i++) {
 
+                            Quartet<Integer, String, byte[], ArrayList<Integer>> announcement = announcements.get(i);
+
                             String originalRefs = "";
-                            for(int j=0; j<announcements.get(i).getValue3().size(); j++){
-                                originalRefs += announcements.get(i).getValue3().get(j) + " ";
+                            for(int j=0; j<announcement.getValue3().size(); j++){
+                                originalRefs += announcement.getValue3().get(j) + " ";
                             }
 
-                            String originalMessage = announcements.get(i).getValue1();
+                            String originalMessage = announcement.getValue1();
                             String originalText = originalMessage.substring(0, originalMessage.indexOf("|"));
 
-                            System.out.println("\nAnnouncement id: " + announcements.get(i).getValue0() + "\n message: " + originalText + "\n references: " + originalRefs);
+                            System.out.println("\nAnnouncement id: " + announcement.getValue0() + "\n message: " + originalText + "\n references: " + originalRefs);
+
+                            //writeback
+
+                            AsyncPost writeBack = new AsyncPost(this, announcement.getValue0(), toReadClientPublicKey, announcement.getValue1(), announcement.getValue2());
+                            new Thread(writeBack).start();
+
+                            seconds = 0;
+                            while (this.postAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+
+                                Thread.sleep(10);
+                                seconds++;
+                                if (seconds > 1000){
+                                    System.out.println("TIMEOUT: Wasn't able to finish writeback operation.");
+                                    break;
+                                }
+
+                            }
+
+
                         }
+
 
                         break;
 
@@ -285,9 +312,9 @@ public class Client {
                         seconds = 0;
                         while (this.readGeneralResponses.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
-                            Thread.sleep(500);
+                            Thread.sleep(10);
                             seconds++;
-                            if (seconds > 19){
+                            if (seconds > 1000){
                                 System.out.println("TIMEOUT: Wasn't able to finish readGeneral operation.");
                                 break;
                             }

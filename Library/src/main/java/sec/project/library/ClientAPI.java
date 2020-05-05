@@ -1,8 +1,11 @@
 package sec.project.library;
 
+import org.javatuples.Quartet;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.security.PublicKey;
+import java.util.ArrayList;
 
 public interface ClientAPI extends Remote {
 
