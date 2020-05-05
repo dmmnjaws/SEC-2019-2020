@@ -22,12 +22,10 @@ public class ClientLibrary implements Serializable {
     private Map<Integer, Announcement> announcements;
     private OneNAtomicRegister oneNAtomicRegister;
     private PublicKey clientPublicKey;
-    private int maxWts;
 
     public ClientLibrary(String clientNumber, PublicKey clientPublicKey){
         this.clientNumber = clientNumber;
         this.clientPublicKey = clientPublicKey;
-        this.maxWts = 0;
         this.announcements = new HashMap<>();
         this.oneNAtomicRegister = new OneNAtomicRegister(this);
     }
@@ -35,14 +33,14 @@ public class ClientLibrary implements Serializable {
     public synchronized void addAnnouncement(Triplet<Integer, String, byte[]> triplet){
         Announcement announcement = new Announcement(announcements.size() + 1, triplet, getExistingReferences());
         this.announcements.put(triplet.getValue0(), announcement);
-        if (maxWts < triplet.getValue0()) {
-            maxWts = triplet.getValue0();
-        }
         System.out.println("\nOn client" + clientNumber + "'s board:"+ announcement.printAnnouncement());
     }
 
     public ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> getAnnouncementsTriplets(int number){
         ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> result = new ArrayList<>();
+
+        //this must be in the beginning of the method to avoid concurrent changes in the maxWts during this method.
+        int maxWts = this.oneNAtomicRegister.getWts();
 
         int aux;
         if(announcements.size() < number){

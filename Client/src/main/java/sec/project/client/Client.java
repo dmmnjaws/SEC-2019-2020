@@ -10,6 +10,7 @@ import sec.project.library.ClientAPI;
 import sec.project.library.ReadView;
 
 import java.io.*;
+import java.rmi.ConnectException;
 import java.security.*;
 import java.util.*;
 
@@ -38,28 +39,37 @@ public class Client {
         this.scanner = new Scanner(System.in);
         System.out.println("\nInsert the client number:");
         this.clientNumber = scanner.nextLine();
-        System.out.println("\nInsert your KeyStore's password:");
-        this.keyStorePassword = new String(System.console().readPassword());
-        System.out.println("\nInsert your Private Key's password:");
-        this.privateKeyPassword = new String(System.console().readPassword());
-        this.serverPublicKeys = new HashMap<>();
 
-        try {
+        while (true){
+            System.out.println("\nInsert your KeyStore's password:");
+            this.keyStorePassword = new String(System.console().readPassword());
+            System.out.println("\nInsert your Private Key's password:");
+            this.privateKeyPassword = new String(System.console().readPassword());
+            this.serverPublicKeys = new HashMap<>();
 
-            this.clientKeyStore = AsymmetricCrypto.getKeyStore("data/keys/client" + this.clientNumber + "_keystore.jks", this.keyStorePassword);
-            this.clientPrivateKey = AsymmetricCrypto.getPrivateKey(this.clientKeyStore, this.privateKeyPassword, "client" + this.clientNumber);
-            this.clientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + this.clientNumber + "_certificate.crt");
+            try {
 
-            for(Map.Entry<Integer, ClientAPI> entry : stubs.entrySet()){
-                PublicKey serverPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/server" + entry.getKey().intValue() + "_certificate.crt");
-                serverPublicKeys.put(serverPublicKey, entry.getValue());
+                this.clientKeyStore = AsymmetricCrypto.getKeyStore("data/keys/client" + this.clientNumber + "_keystore.jks", this.keyStorePassword);
+                this.clientPrivateKey = AsymmetricCrypto.getPrivateKey(this.clientKeyStore, this.privateKeyPassword, "client" + this.clientNumber);
+                this.clientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + this.clientNumber + "_certificate.crt");
+
+                for (Map.Entry<Integer, ClientAPI> entry : stubs.entrySet()) {
+                    PublicKey serverPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/server" + entry.getKey().intValue() + "_certificate.crt");
+                    serverPublicKeys.put(serverPublicKey, entry.getValue());
+                }
+
+            } catch (IOException e) {
+                System.out.println("\n-------------------------------------------------------------\n" + "Wrong credentials. Access Denied.");
+                continue;
+            } catch (UnrecoverableKeyException e){
+                System.out.println("\n-------------------------------------------------------------\n" + "Wrong credentials. Access Denied.");
+                continue;
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
+            break;
         }
+
     }
 
     public void execute() {
@@ -84,7 +94,15 @@ public class Client {
                         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
                             response = entry.getValue().login(this.clientPublicKey);
                             if (AsymmetricCrypto.validateDigitalSignature(response.getSignature(), entry.getKey(), response.getMessage())) {
-                                this.postWts = Integer.parseInt(response.getMessage());
+                                String[] responses = response.getMessage().split("|");
+                                if(responses.length >= 3){
+                                    if (Integer.parseInt(responses[0]) > this.postWts){
+                                        this.postWts = Integer.parseInt(responses[0]);
+                                    }
+                                    if (Integer.parseInt(responses[2]) > this.postGeneralWts){
+                                        this.postGeneralWts = Integer.parseInt(responses[2]);
+                                    }
+                                }
                             }
                         }
 

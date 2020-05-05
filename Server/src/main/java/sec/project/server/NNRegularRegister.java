@@ -36,16 +36,14 @@ public class NNRegularRegister implements Serializable {
             UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException,
             InvalidKeyException {
 
-        System.out.println(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,
-                value + wts + clientNumber) && wts > this.wts);
-
         if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,
-                value + wts + clientNumber) && wts > this.wts){
+                value + wts + clientNumber) && !this.generalBoard.getExistingReferences().contains(wts)){
 
             this.valueQuartet = new Quartet<>(wts, value, clientNumber, signature);
             this.generalBoard.addAnnouncement(this.valueQuartet);
-            this.wts = wts;
-            System.out.println("DEBUG2: " + value + "|" + wts + "|" + clientNumber + "|" + this.wts);
+            if(wts > this.wts){
+                this.wts = wts;
+            }
         }
 
         //merely representative, the method never returns this.

@@ -37,11 +37,13 @@ public class OneNAtomicRegister implements Serializable {
             InvalidKeyException {
 
         if (AsymmetricCrypto.validateDigitalSignature(signature, this.clientLibrary.getClientPublicKey(),
-                value + wts) && wts > this.wts){
+                value + wts) && !this.clientLibrary.getExistingReferences().contains(wts)){
 
             this.valueTriplet = new Triplet<>(wts, value, signature);
             this.clientLibrary.addAnnouncement(this.valueTriplet);
-            this.wts = wts;
+            if (wts > this.wts){
+                this.wts = wts;
+            }
             return "ACK";
         }
 

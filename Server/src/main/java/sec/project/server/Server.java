@@ -19,6 +19,7 @@ import java.util.*;
 public class Server implements ClientAPI {
 
     private int nServers;
+    private int serverPort;
     private KeyStore serverKeyStore;
     private PrivateKey serverPrivateKey;
     private PublicKey serverPublicKey;
@@ -28,6 +29,7 @@ public class Server implements ClientAPI {
     public Server (int serverPort, int nServers){
 
         this.nServers = nServers;
+        this.serverPort = serverPort;
 
         try {
 
@@ -48,7 +50,7 @@ public class Server implements ClientAPI {
     public void saveState() throws IOException {
 
         State state = new State(this.clientList, this.generalBoard);
-        FileOutputStream f = new FileOutputStream(new File("data/state.txt"));
+        FileOutputStream f = new FileOutputStream(new File("data/state" + this.serverPort + ".txt"));
         ObjectOutputStream o = new ObjectOutputStream(f);
 
         o.writeObject(state);
@@ -59,7 +61,7 @@ public class Server implements ClientAPI {
 
     public void loadState() throws IOException, ClassNotFoundException {
 
-        File stateFile = new File("data/state.txt");
+        File stateFile = new File("data/state" + this.serverPort + ".txt");
 
         if (!(stateFile.exists())) {
 
@@ -160,9 +162,7 @@ public class Server implements ClientAPI {
             System.out.println("\n-------------------------------------------------------------\n" +
                     "client" + clientList.get(clientPublicKey).getClientNumber() + " called postGeneral() method.");
 
-            System.out.println(message + wts);
             String ack = this.generalBoard.write(wts, message, clientList.get(clientPublicKey).getClientNumber(), signature, clientPublicKey);
-            System.out.println(message + wts);
             saveState();
             return new Acknowledge(wts, ack, AsymmetricCrypto.wrapDigitalSignature(ack + wts, this.serverPrivateKey));
 
@@ -204,7 +204,7 @@ public class Server implements ClientAPI {
 
         try{
             System.out.println("\n-------------------------------------------------------------\n" +
-                    "A client called the read() method to read client" + clientList.get(toReadClientPublicKey).getClientNumber() + "'s announcements.");
+                    "client called the read() method to read client" + clientList.get(toReadClientPublicKey).getClientNumber() + "'s announcements.");
 
             ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> triplets = this.clientList.get(toReadClientPublicKey).read(number, rid, signature, clientPublicKey);
             return new ReadView(triplets, rid, AsymmetricCrypto.wrapDigitalSignature(AsymmetricCrypto.transformTripletToString(triplets) + rid, this.serverPrivateKey));
@@ -280,7 +280,7 @@ public class Server implements ClientAPI {
     public Acknowledge login(PublicKey clientPublicKey) throws RemoteException {
 
         try {
-            String message = "" + this.clientList.get(clientPublicKey).getOneNRegularRegister().getWts();
+            String message = "" + this.clientList.get(clientPublicKey).getOneNRegularRegister().getWts() + "|" + this.generalBoard.getnNRegularRegister().getRid();
             return new Acknowledge(message, AsymmetricCrypto.wrapDigitalSignature(message, this.serverPrivateKey));
         } catch (Exception e) {
             e.printStackTrace();

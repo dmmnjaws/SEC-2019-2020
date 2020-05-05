@@ -22,11 +22,9 @@ public class Announcement implements Serializable {
         String message = triplet.getValue1();
         String [] ref = message.substring(message.indexOf("|")+1, message.length()).split(" ");
 
-        if(existingReferences != null){
-            for(int i=1; i<ref.length; i++){
-                if(existingReferences.contains(Integer.valueOf(ref[i]))){
-                    this.references.add(Integer.valueOf(ref[i]));
-                }
+        for(int i=1; i<ref.length; i++){
+            if(existingReferences.contains(Integer.valueOf(ref[i]))){
+                this.references.add(Integer.valueOf(ref[i]));
             }
         }
     }
@@ -40,11 +38,9 @@ public class Announcement implements Serializable {
         String message = quartet.getValue1();
         String [] ref = message.substring(message.indexOf("|")+1, message.length()).split(" ");
 
-        if(existingReferences != null){
-            for(int i=1; i<ref.length; i++){
-                if(existingReferences.contains(Integer.valueOf(ref[i]))){
-                    this.references.add(Integer.valueOf(ref[i]));
-                }
+        for(int i=1; i<ref.length; i++){
+            if(existingReferences.contains(Integer.valueOf(ref[i]))){
+                this.references.add(Integer.valueOf(ref[i]));
             }
         }
     }

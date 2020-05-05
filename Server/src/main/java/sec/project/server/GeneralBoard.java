@@ -22,7 +22,6 @@ public class GeneralBoard implements Serializable {
 
     private Map<Integer, Announcement> announcements;
     private NNRegularRegister nNRegularRegister;
-    int maxWts;
 
     public GeneralBoard(){
         this.announcements = new HashMap<>();
@@ -32,14 +31,14 @@ public class GeneralBoard implements Serializable {
     public synchronized void addAnnouncement(Quartet<Integer, String, String, byte[]> quartet){
         Announcement announcement = new Announcement(announcements.size()+1, quartet, getExistingReferences());
         this.announcements.put(quartet.getValue0(), announcement);
-        if (maxWts < quartet.getValue0()) {
-            maxWts = quartet.getValue0();
-        }
         System.out.println("\nOn the General Board:"+ announcement.printAnnouncement());
     }
 
     public ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> getAnnouncementsQuartets(int number){
         ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> result = new ArrayList<>();
+
+        //this must be in the beginning of the method to avoid concurrent changes in the maxWts during this method.
+        int maxWts = this.nNRegularRegister.getWts();
 
         int aux;
         if(announcements.size() < number){
@@ -56,8 +55,15 @@ public class GeneralBoard implements Serializable {
     }
 
     public ArrayList<Integer> getExistingReferences(){
-        return new ArrayList<>(this.announcements.keySet());
+        ArrayList<Integer> result = new ArrayList<>(this.announcements.keySet());
+        if (result == null){
+            return new ArrayList<>();
+        }
+
+        return result;
     }
+
+    public NNRegularRegister getnNRegularRegister() { return this.nNRegularRegister; }
 
     public String write(int wts, String message, String clientNumber, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
             UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
