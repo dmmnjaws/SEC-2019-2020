@@ -6,6 +6,7 @@ import org.javatuples.Triplet;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class Announcement implements Serializable {
     private int id;
@@ -15,7 +16,7 @@ public class Announcement implements Serializable {
     private Triplet<Integer, String , byte[]> triplet;
     private Quartet<Integer, String, String, byte[]> quartet;
 
-    public Announcement(int number, Triplet<Integer, String, byte[]> triplet, ArrayList<Integer> existingReferences){
+    public Announcement(int number, Triplet<Integer, String, byte[]> triplet, Map<Integer, Announcement> existingReferences){
         this.id = number;
         this.triplet = triplet;
         this.references = new ArrayList<>();
@@ -23,13 +24,13 @@ public class Announcement implements Serializable {
         String [] ref = message.substring(message.indexOf("|")+1, message.length()).split(" ");
 
         for(int i=1; i<ref.length; i++){
-            if(existingReferences.contains(Integer.valueOf(ref[i]))){
+            if(existingReferences.containsKey(Integer.valueOf(ref[i]))){
                 this.references.add(Integer.valueOf(ref[i]));
             }
         }
     }
 
-    public Announcement(int number, Quartet<Integer, String, String, byte[]> quartet, ArrayList<Integer> existingReferences){
+    public Announcement(int number, Quartet<Integer, String, String, byte[]> quartet, Map<Integer, Announcement> existingReferences){
 
         System.out.println("DEBUG: " + quartet);
         this.id = number;
@@ -39,7 +40,7 @@ public class Announcement implements Serializable {
         String [] ref = message.substring(message.indexOf("|")+1, message.length()).split(" ");
 
         for(int i=1; i<ref.length; i++){
-            if(existingReferences.contains(Integer.valueOf(ref[i]))){
+            if(existingReferences.containsKey(Integer.valueOf(ref[i]))){
                 this.references.add(Integer.valueOf(ref[i]));
             }
         }

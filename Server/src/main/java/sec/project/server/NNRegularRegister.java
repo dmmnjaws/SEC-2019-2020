@@ -37,7 +37,7 @@ public class NNRegularRegister implements Serializable {
             InvalidKeyException {
 
         if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,
-                value + wts + clientNumber) && !this.generalBoard.getExistingReferences().contains(wts)){
+                value + wts + clientNumber) && !this.generalBoard.getAnnouncements().containsKey(wts)){
 
             this.valueQuartet = new Quartet<>(wts, value, clientNumber, signature);
             this.generalBoard.addAnnouncement(this.valueQuartet);

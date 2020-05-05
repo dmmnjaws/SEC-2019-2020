@@ -31,7 +31,7 @@ public class ClientLibrary implements Serializable {
     }
 
     public synchronized void addAnnouncement(Triplet<Integer, String, byte[]> triplet){
-        Announcement announcement = new Announcement(announcements.size() + 1, triplet, getExistingReferences());
+        Announcement announcement = new Announcement(announcements.size() + 1, triplet, getAnnouncements());
         this.announcements.put(triplet.getValue0(), announcement);
         System.out.println("\nOn client" + clientNumber + "'s board:"+ announcement.printAnnouncement());
     }
@@ -67,6 +67,8 @@ public class ClientLibrary implements Serializable {
     public ArrayList<Integer> getExistingReferences(){
         return new ArrayList<>(this.announcements.keySet());
     }
+
+    public Map<Integer, Announcement> getAnnouncements() { return this.announcements; }
 
     public OneNAtomicRegister getOneNRegularRegister() { return this.oneNAtomicRegister; }
 

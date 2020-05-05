@@ -29,7 +29,7 @@ public class GeneralBoard implements Serializable {
     }
 
     public synchronized void addAnnouncement(Quartet<Integer, String, String, byte[]> quartet){
-        Announcement announcement = new Announcement(announcements.size()+1, quartet, getExistingReferences());
+        Announcement announcement = new Announcement(announcements.size()+1, quartet, getAnnouncements());
         this.announcements.put(quartet.getValue0(), announcement);
         System.out.println("\nOn the General Board:"+ announcement.printAnnouncement());
     }
@@ -64,6 +64,8 @@ public class GeneralBoard implements Serializable {
     }
 
     public NNRegularRegister getnNRegularRegister() { return this.nNRegularRegister; }
+
+    public Map<Integer, Announcement> getAnnouncements() { return this.announcements; }
 
     public String write(int wts, String message, String clientNumber, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
             UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
