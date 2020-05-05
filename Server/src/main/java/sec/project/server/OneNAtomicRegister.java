@@ -49,7 +49,7 @@ public class OneNAtomicRegister implements Serializable {
         return "FAIL";
     }
 
-    public ArrayList<Triplet<Integer, String, byte[]>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
+    public ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
             UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
 
         if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,this.clientLibrary.getClientPublicKey().toString() + number + rid)){

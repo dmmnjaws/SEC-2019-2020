@@ -1,6 +1,8 @@
 package sec.project.server;
 
+import org.javatuples.Quartet;
 import org.javatuples.Triplet;
+import sec.project.library.ReadView;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -11,60 +13,46 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ClientLibrary implements Serializable {
-    private int seqNumber;
     private String clientNumber;
-    private ArrayList<Announcement> announcements;
+    private Map<Integer, Announcement> announcements;
     private OneNAtomicRegister oneNAtomicRegister;
     private PublicKey clientPublicKey;
+    private int maxWts;
 
     public ClientLibrary(String clientNumber, PublicKey clientPublicKey){
         this.clientNumber = clientNumber;
         this.clientPublicKey = clientPublicKey;
-        this.seqNumber = 1;
-        this.announcements = new ArrayList<>();
+        this.maxWts = 0;
+        this.announcements = new HashMap<>();
         this.oneNAtomicRegister = new OneNAtomicRegister(this);
     }
 
     public synchronized void addAnnouncement(Triplet<Integer, String, byte[]> triplet){
-        Announcement announcement = new Announcement(announcements.size() + 1, triplet);
-        this.announcements.add(announcement);
-        incrementSeqNumber();
+        Announcement announcement = new Announcement(announcements.size() + 1, triplet, getExistingReferences());
+        this.announcements.put(triplet.getValue0(), announcement);
+        if (maxWts < triplet.getValue0()) {
+            maxWts = triplet.getValue0();
+        }
         System.out.println("\nOn client" + clientNumber + "'s board:"+ announcement.printAnnouncement());
-        System.out.println("\nDEBUG: Triplet: " + triplet.toString());
     }
 
-    public String getAnnouncements(int number){
-        String print = "";
+    public ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> getAnnouncementsTriplets(int number){
+        ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> result = new ArrayList<>();
 
-        if (number < announcements.size()) {
-            List<Announcement> resultAnnouncements = this.announcements.subList(announcements.size() - number, announcements.size());
-            for (Announcement announcement : resultAnnouncements){
-                print += "\n" + announcement.printAnnouncement();
-            }
-        } else {
-            for (Announcement announcement : this.announcements){
-                print += "\n" + announcement.printAnnouncement();
-            }
+        int aux;
+        if(announcements.size() < number){
+            aux = announcements.size();
+        }else{
+            aux = number;
         }
 
-        return print;
-    }
-
-    public ArrayList<Triplet<Integer, String, byte[]>> getAnnouncementsTriplets(int number){
-        ArrayList<Triplet<Integer, String, byte[]>> result = new ArrayList<>();
-
-        if (number < announcements.size()) {
-            List<Announcement> resultAnnouncements = this.announcements.subList(announcements.size() - number, announcements.size());
-            for (Announcement announcement : resultAnnouncements){
-                result.add(announcement.getTriplet());
-            }
-        } else {
-            for (Announcement announcement : this.announcements){
-                result.add(announcement.getTriplet());
-            }
+        for (int i = maxWts - aux + 1; i <= maxWts; i++) {
+            result.add(this.announcements.get(i).getTriplet());
         }
 
         return result;
@@ -74,23 +62,15 @@ public class ClientLibrary implements Serializable {
         return this.clientNumber;
     }
 
-    public int getSeqNumber() {
-        return this.seqNumber;
-    }
-
     public PublicKey getClientPublicKey() {
         return this.clientPublicKey;
     }
 
+    public ArrayList<Integer> getExistingReferences(){
+        return new ArrayList<>(this.announcements.keySet());
+    }
+
     public OneNAtomicRegister getOneNRegularRegister() { return this.oneNAtomicRegister; }
-
-    public ArrayList<Announcement> getAnnouncements() {
-        return this.announcements;
-    }
-
-    public void incrementSeqNumber(){
-        this.seqNumber++;
-    }
 
     public String write(int wts, String message, byte[] signature) throws NoSuchPaddingException,
             UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
@@ -98,7 +78,7 @@ public class ClientLibrary implements Serializable {
         return this.oneNAtomicRegister.write(wts, message, signature);
     }
 
-    public ArrayList<Triplet<Integer, String, byte[]>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
+    public ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
             UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
 
         return this.oneNAtomicRegister.read(number, rid, signature, clientPublicKey);

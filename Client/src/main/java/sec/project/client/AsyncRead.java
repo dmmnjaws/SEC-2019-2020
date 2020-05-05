@@ -1,5 +1,6 @@
 package sec.project.client;
 
+import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
@@ -9,6 +10,7 @@ import sec.project.library.ReadView;
 import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class AsyncRead implements Runnable {
@@ -41,7 +43,7 @@ public class AsyncRead implements Runnable {
                         && rid == readResponse.getRid()) {
 
                     boolean valid = true;
-                    for (Triplet<Integer, String, byte[]> announce : readResponse.getAnnounces()) {
+                    for (Quartet<Integer, String, byte[], ArrayList<Integer>> announce : readResponse.getAnnounces()) {
                         if (!(AsymmetricCrypto.validateDigitalSignature(announce.getValue2(), toReadClientPublicKey,
                                 announce.getValue1() + announce.getValue0()))) {
                             valid = false;

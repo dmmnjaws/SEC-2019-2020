@@ -1,6 +1,7 @@
 package sec.project.server;
 
 import org.javatuples.Quartet;
+import org.javatuples.Quintet;
 import org.javatuples.Triplet;
 
 import java.io.Serializable;
@@ -14,21 +15,23 @@ public class Announcement implements Serializable {
     private Triplet<Integer, String , byte[]> triplet;
     private Quartet<Integer, String, String, byte[]> quartet;
 
-    public Announcement(int number, Triplet<Integer, String, byte[]> triplet){
+    public Announcement(int number, Triplet<Integer, String, byte[]> triplet, ArrayList<Integer> existingReferences){
         this.id = number;
         this.triplet = triplet;
         this.references = new ArrayList<>();
         String message = triplet.getValue1();
         String [] ref = message.substring(message.indexOf("|")+1, message.length()).split(" ");
 
-        for(int i=1; i<ref.length; i++){
-            if(Integer.valueOf(ref[i]) < this.id){
-                this.references.add(Integer.valueOf(ref[i]));
+        if(existingReferences != null){
+            for(int i=1; i<ref.length; i++){
+                if(existingReferences.contains(Integer.valueOf(ref[i]))){
+                    this.references.add(Integer.valueOf(ref[i]));
+                }
             }
         }
     }
 
-    public Announcement(int number, Quartet<Integer, String, String, byte[]> quartet){
+    public Announcement(int number, Quartet<Integer, String, String, byte[]> quartet, ArrayList<Integer> existingReferences){
 
         System.out.println("DEBUG: " + quartet);
         this.id = number;
@@ -37,13 +40,13 @@ public class Announcement implements Serializable {
         String message = quartet.getValue1();
         String [] ref = message.substring(message.indexOf("|")+1, message.length()).split(" ");
 
-        for(int i=1; i<ref.length; i++){
-            if(Integer.valueOf(ref[i]) < this.id){
-                this.references.add(Integer.valueOf(ref[i]));
+        if(existingReferences != null){
+            for(int i=1; i<ref.length; i++){
+                if(existingReferences.contains(Integer.valueOf(ref[i]))){
+                    this.references.add(Integer.valueOf(ref[i]));
+                }
             }
         }
-
-        printAnnouncement();
     }
 
     public String printAnnouncement(){
@@ -67,8 +70,12 @@ public class Announcement implements Serializable {
         return this.id;
     }
 
-    public Triplet<Integer, String, byte[]> getTriplet() { return this.triplet; }
+    public Quartet<Integer, String, byte[], ArrayList<Integer>> getTriplet() {
+        return new Quartet<>(this.triplet.getValue0(), this.triplet.getValue1(), this.triplet.getValue2(), this.references);
+    }
 
-    public Quartet<Integer, String, String, byte[]> getQuartet() { return this.quartet; }
+    public Quintet<Integer, String, String, byte[], ArrayList<Integer>> getQuartet() {
+        return new Quintet<>(this.quartet.getValue0(), this.quartet.getValue1(), this.quartet.getValue2(), this.quartet.getValue3(), this.references);
+    }
 
 }

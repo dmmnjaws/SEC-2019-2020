@@ -1,6 +1,7 @@
 package sec.project.server;
 
 import org.javatuples.Quartet;
+import org.javatuples.Quintet;
 import org.javatuples.Triplet;
 import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
@@ -140,6 +141,7 @@ public class Server implements ClientAPI {
 
 
         } catch (NullPointerException e) {
+            e.printStackTrace();
             System.out.println("\nInvalid Request!");
             throw new RemoteException("\nInvalid Request!");
 
@@ -185,6 +187,7 @@ public class Server implements ClientAPI {
 
 
         } catch (NullPointerException e) {
+            e.printStackTrace();
             System.out.println("\nInvalid Request!");
             throw new RemoteException("Invalid Request!");
 
@@ -203,7 +206,7 @@ public class Server implements ClientAPI {
             System.out.println("\n-------------------------------------------------------------\n" +
                     "A client called the read() method to read client" + clientList.get(toReadClientPublicKey).getClientNumber() + "'s announcements.");
 
-            ArrayList<Triplet<Integer, String, byte[]>> triplets = this.clientList.get(toReadClientPublicKey).read(number, rid, signature, clientPublicKey);
+            ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> triplets = this.clientList.get(toReadClientPublicKey).read(number, rid, signature, clientPublicKey);
             return new ReadView(triplets, rid, AsymmetricCrypto.wrapDigitalSignature(AsymmetricCrypto.transformTripletToString(triplets) + rid, this.serverPrivateKey));
 
             //if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, toReadClientPublicKey.toString() + number + seqNumber)
@@ -227,6 +230,7 @@ public class Server implements ClientAPI {
             //}
 
         } catch (NullPointerException e) {
+            e.printStackTrace();
             System.out.println("\nInvalid Request!");
             throw new RemoteException("\nInvalid Request!");
         } catch (Exception e){
@@ -243,7 +247,7 @@ public class Server implements ClientAPI {
             System.out.println("\n-------------------------------------------------------------\n" +
                 "A client called the readGeneral() method.");
 
-            ArrayList<Quartet<Integer, String, String, byte[]>> quartets = this.generalBoard.read(number, rid, signature, clientPublicKey);
+            ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> quartets = this.generalBoard.read(number, rid, signature, clientPublicKey);
             return new ReadView(rid, AsymmetricCrypto.wrapDigitalSignature(AsymmetricCrypto.transformQuartetToString(quartets) + rid, this.serverPrivateKey), quartets);
 
             //if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,"" + number + seqNumber)

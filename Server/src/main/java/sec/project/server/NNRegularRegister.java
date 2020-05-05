@@ -1,6 +1,7 @@
 package sec.project.server;
 
 import org.javatuples.Quartet;
+import org.javatuples.Quintet;
 import org.javatuples.Triplet;
 import sec.project.library.AsymmetricCrypto;
 
@@ -51,7 +52,7 @@ public class NNRegularRegister implements Serializable {
         return "FAIL";
     }
 
-    public ArrayList<Quartet<Integer, String, String, byte[]>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
+    public ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
             UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
 
 

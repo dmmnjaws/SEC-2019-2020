@@ -2,6 +2,7 @@ package sec.project.library;
 
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 import org.javatuples.Quartet;
+import org.javatuples.Quintet;
 import org.javatuples.Triplet;
 
 import java.io.FileInputStream;
@@ -107,24 +108,24 @@ public class AsymmetricCrypto {
         return certificate.getPublicKey();
     }
 
-    public static String transformTripletToString(ArrayList<Triplet<Integer, String, byte[]>> triplets) throws UnsupportedEncodingException {
+    public static String transformTripletToString(ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> quartets) throws UnsupportedEncodingException {
 
         String result = "";
 
-        for (Triplet<Integer, String, byte[]> triplet : triplets){
-            result += "" + triplet.getValue0() + triplet.getValue1() + new String(triplet.getValue2(), "UTF-8");
+        for (Quartet<Integer, String, byte[], ArrayList<Integer>> triplet : quartets){
+            result += "" + triplet.getValue0() + triplet.getValue1() + new String(triplet.getValue2(), "UTF-8") + triplet.getValue3();
 
         }
 
         return result;
     }
 
-    public static String transformQuartetToString(ArrayList<Quartet<Integer, String, String, byte[]>> quartets) throws UnsupportedEncodingException {
+    public static String transformQuartetToString(ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> quintets) throws UnsupportedEncodingException {
 
         String result = "";
 
-        for (Quartet<Integer, String, String, byte[]> quartet : quartets){
-            result += "" + quartet.getValue0() + quartet.getValue1() + quartet.getValue2() + new String(quartet.getValue3(), "UTF-8");
+        for (Quintet<Integer, String, String, byte[], ArrayList<Integer>> quartet : quintets){
+            result += "" + quartet.getValue0() + quartet.getValue1() + quartet.getValue2() + new String(quartet.getValue3(), "UTF-8") + quartet.getValue4();
 
         }
 

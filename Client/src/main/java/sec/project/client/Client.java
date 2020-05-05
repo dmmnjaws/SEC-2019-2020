@@ -2,6 +2,7 @@ package sec.project.client;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.javatuples.Quartet;
+import org.javatuples.Quintet;
 import org.javatuples.Triplet;
 import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
@@ -73,6 +74,7 @@ public class Client {
             byte[] signature;
             Acknowledge response;
             ArrayList<ReadView> readResponsesGeneral = new ArrayList<>();
+            int seconds;
 
             try {
 
@@ -126,7 +128,16 @@ public class Client {
                         AsyncPost post = new AsyncPost(this, message, signature);
                         new Thread(post).start();
 
+                        seconds = 0;
                         while (this.postAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+
+                            Thread.sleep(500);
+                            seconds++;
+                            if (seconds > 19){
+                                System.out.println("TIMEOUT: Wasn't able to finish post operation.");
+                                break;
+                            }
+
                         }
 
                         System.out.println("\nSuccessfully posted.");
@@ -153,7 +164,16 @@ public class Client {
                         AsyncPostGeneral postGeneral = new AsyncPostGeneral(this, message, signature);
                         new Thread(postGeneral).start();
 
+                        seconds = 0;
                         while (this.postGeneralAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+
+                            Thread.sleep(500);
+                            seconds++;
+                            if (seconds > 19){
+                                System.out.println("TIMEOUT: Wasn't able to finish postGeneral operation.");
+                                break;
+                            }
+
                         }
 
                         System.out.println("\nSuccessfully posted.");
@@ -177,14 +197,24 @@ public class Client {
                         AsyncRead read = new AsyncRead(this, toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), signature);
                         new Thread(read).start();
 
-                        while (this.readResponses.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {}
+                        seconds = 0;
+                        while (this.readResponses.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
-                        Map<Integer, Triplet<Integer, String, byte[]>> announcements = new HashMap<>();
+                            Thread.sleep(500);
+                            seconds++;
+                            if (seconds > 19){
+                                System.out.println("TIMEOUT: Wasn't able to finish read operation.");
+                                break;
+                            }
+
+                        }
+
+                        Map<Integer, Quartet<Integer, String, byte[], ArrayList<Integer>>> announcements = new HashMap<>();
 
                         int maxWts = 0;
                         int numberOfAnnoucesServer = 0;
                         for (ReadView readView : this.readResponses) {
-                            for (Triplet<Integer, String, byte[]> triplet : readView.getAnnounces()) {
+                            for (Quartet<Integer, String, byte[], ArrayList<Integer>> triplet : readView.getAnnounces()) {
 
                                 if (maxWts < triplet.getValue0()) {
                                     maxWts = triplet.getValue0();
@@ -206,9 +236,14 @@ public class Client {
                         }
 
                         for (int i = maxWts - aux + 1; i <= maxWts; i++) {
+
+                            String originalRefs = "";
+                            for(int j=0; j<announcements.get(i).getValue3().size(); j++){
+                                originalRefs += announcements.get(i).getValue3().get(j) + " ";
+                            }
+
                             String originalMessage = announcements.get(i).getValue1();
                             String originalText = originalMessage.substring(0, originalMessage.indexOf("|"));
-                            String originalRefs = originalMessage.substring(originalMessage.indexOf("|") + 1, originalMessage.length());
 
                             System.out.println("\nAnnouncement id: " + announcements.get(i).getValue0() + "\n message: " + originalText + "\n references: " + originalRefs);
                         }
@@ -229,7 +264,16 @@ public class Client {
                         AsyncReadGeneral readGeneral = new AsyncReadGeneral(this, Integer.parseInt(numberOfAnnouncements), signature);
                         new Thread(readGeneral).start();
 
+                        seconds = 0;
                         while (this.readGeneralResponses.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+
+                            Thread.sleep(500);
+                            seconds++;
+                            if (seconds > 19){
+                                System.out.println("TIMEOUT: Wasn't able to finish readGeneral operation.");
+                                break;
+                            }
+
                         }
 
                         int versionGeneral = 0;
@@ -244,11 +288,15 @@ public class Client {
                             }
                         }
 
-                        for (Quartet<Integer, String, String, byte[]> announce : mostUpdatedGeneral.getAnnouncesGeneral()) {
+                        for (Quintet<Integer, String, String, byte[], ArrayList<Integer>> announce : mostUpdatedGeneral.getAnnouncesGeneral()) {
+
+                            String originalRefs = "";
+                            for(int j=0; j<announce.getValue4().size(); j++){
+                                originalRefs += announce.getValue4().get(j) + " ";
+                            }
 
                             String originalMessage = announce.getValue1();
                             String originalText = originalMessage.substring(0, originalMessage.indexOf("|"));
-                            String originalRefs = originalMessage.substring(originalMessage.indexOf("|") + 1, originalMessage.length());
 
                             System.out.println("\nAnnouncement id: " + announce.getValue0() + "\n message: " + originalText + "\n references: " + originalRefs);
                         }

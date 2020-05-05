@@ -1,6 +1,7 @@
 package sec.project.client;
 
 import org.javatuples.Quartet;
+import org.javatuples.Quintet;
 import org.javatuples.Triplet;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
@@ -8,6 +9,7 @@ import sec.project.library.ReadView;
 
 import java.rmi.RemoteException;
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class AsyncReadGeneral implements Runnable {
@@ -37,7 +39,7 @@ public class AsyncReadGeneral implements Runnable {
                         AsymmetricCrypto.transformQuartetToString(readGeneralResponse.getAnnouncesGeneral()) + readGeneralResponse.getRid()) && ridGeneral == readGeneralResponse.getRid()){
 
                     boolean valid = true;
-                    for(Quartet<Integer, String, String, byte[]> announce : readGeneralResponse.getAnnouncesGeneral()){
+                    for(Quintet<Integer, String, String, byte[], ArrayList<Integer>> announce : readGeneralResponse.getAnnouncesGeneral()){
 
                         PublicKey clientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + announce.getValue2() + "_certificate.crt");
 
