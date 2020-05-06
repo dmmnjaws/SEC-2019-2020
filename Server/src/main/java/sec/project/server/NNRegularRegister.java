@@ -23,13 +23,16 @@ public class NNRegularRegister implements Serializable {
     private int wts;
     private int rid;
     private GeneralBoard generalBoard;
-
+    boolean iswriting = false;
+    int clientid;
 
     public NNRegularRegister(GeneralBoard generalBoard){
         this.generalBoard = generalBoard;
         this.valueQuartet = new Quartet<>(0, null, null, null);
         this.rid = 0;
         this.wts = 0;
+
+
     }
 
     public String write(int wts, String value, String clientNumber, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,

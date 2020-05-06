@@ -8,6 +8,8 @@ import java.io.File;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 public class ServerInit {
@@ -15,25 +17,35 @@ public class ServerInit {
     private static Registry registry;
     private static ClientAPI stub;
     private static Server server;
+    private static Map<String, ClientAPI> stubs;
 
     public static void main( String[] args ) {
 
-        System.out.println( "\nInsert the number of servers:" );
-        int nServers = Integer.parseInt(System.console().readLine());
-        System.out.println( "\nInsert the port number for this server.");
-        int serverPort = Integer.parseInt(System.console().readLine());
+        System.out.println( "\nInsert the ports of known servers separated by ',': " );
+        String ports = System.console().readLine();
+        String[] portsArray = ports.split(",");
 
-        ServerInit server = new ServerInit(serverPort, nServers);
+        System.out.println( "\nInsert the port number for this server.");
+        String serverPort = System.console().readLine();
+
+        stubs = new HashMap<>();
+        for (String serverPortString : portsArray){
+            if (!serverPortString.equals(serverPort)){
+                stubs.put(serverPort, null);
+            }
+        }
+
+        ServerInit server = new ServerInit(Integer.parseInt(serverPort), stubs);
 
         while(true){
         }
 
     }
 
-    public ServerInit(int server_port, int nServers){
+    public ServerInit(int server_port, Map<String, ClientAPI> stubs){
 
         try {
-            this.server = new Server(server_port, nServers);
+            this.server = new Server(server_port, stubs);
             this.stub = (ClientAPI) UnicastRemoteObject.exportObject(server, server_port);
             this.registry = LocateRegistry.createRegistry(server_port);
             registry.rebind("localhost:" + String.valueOf(server_port) + "/ClientAPI", stub);

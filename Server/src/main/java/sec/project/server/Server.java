@@ -18,7 +18,7 @@ import java.util.*;
 
 public class Server implements ClientAPI {
 
-    private int nServers;
+    private Map<String, ClientAPI> stubs;
     private int serverPort;
     private KeyStore serverKeyStore;
     private PrivateKey serverPrivateKey;
@@ -26,9 +26,9 @@ public class Server implements ClientAPI {
     private Map<PublicKey, ClientLibrary> clientList;
     private GeneralBoard generalBoard;
 
-    public Server (int serverPort, int nServers){
+    public Server (int serverPort, Map<String, ClientAPI> stubs){
 
-        this.nServers = nServers;
+        this.stubs = stubs;
         this.serverPort = serverPort;
 
         try {
