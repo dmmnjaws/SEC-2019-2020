@@ -23,6 +23,7 @@ public class NNRegularRegister implements Serializable {
     private int wts;
     private int rid;
     private GeneralBoard generalBoard;
+    private ArrayList<String> ackList;
     boolean iswriting = false;
     int clientid;
 
@@ -32,21 +33,38 @@ public class NNRegularRegister implements Serializable {
         this.rid = 0;
         this.wts = 0;
 
-
+        this.ackList = new ArrayList<>();
     }
 
     public String write(int wts, String value, String clientNumber, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
             UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException,
             InvalidKeyException {
-
+        //Substituir por maior
         if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,
                 value + wts + clientNumber) && !this.generalBoard.getAnnouncements().containsKey(wts)){
 
+            if(Integer.parseInt(ackList.get(0)) < 1/*client-id*/ && !ackList.isEmpty()){
+                //substitui tudo, ou seja volta a fazer
+            } else if(Integer.parseInt(ackList.get(0)) == wts){
+                ackList.add("ACK");
+            }
+
             this.valueQuartet = new Quartet<>(wts, value, clientNumber, signature);
             this.generalBoard.addAnnouncement(this.valueQuartet);
+
+            while(ackList.size() < 69){
+                if(ackList.get(0) != "clientInicial"){
+                    //fecha a thread porque existe um cliente prioritario a tentar por
+                    //throw new Exception();
+                }
+            }
+
+            ArrayList<String> ackList = new ArrayList<>();
+
             if(wts > this.wts){
                 this.wts = wts;
             }
+
         }
 
         //merely representative, the method never returns this.
