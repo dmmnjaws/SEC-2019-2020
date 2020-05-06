@@ -1,5 +1,10 @@
 package sec.project.library;
 
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import org.javatuples.Quartet;
+import org.javatuples.Quintet;
+import org.javatuples.Triplet;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -12,6 +17,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
@@ -26,7 +32,7 @@ public class AsymmetricCrypto {
             NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException,
             IllegalBlockSizeException, UnsupportedEncodingException {
 
-        System.out.println("\nDEBUG: Wrapping Signature:\n" + msg);
+        //System.out.println("\nDEBUG: Wrapping Signature:\n" + msg);
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, senderPrivateKey);
         byte [] hash = digestMessage(msg);
@@ -37,12 +43,12 @@ public class AsymmetricCrypto {
             NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException,
             IllegalBlockSizeException, UnsupportedEncodingException {
 
-        System.out.println("\nDEBUG: Unwrapping Signature:\n" + msg);
+        //System.out.println("\nDEBUG: Unwrapping Signature:\n" + msg);
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, senderPublicKey);
         byte [] localHash = digestMessage(msg);
         byte [] receivedDecryptHash = cipher.doFinal(receivedHash);
-        System.out.println("\nDEBUG: boolean - equal signatures?\n" + Arrays.equals(receivedDecryptHash,localHash));
+        //System.out.println("\nDEBUG: boolean - equal signatures?\n" + Arrays.equals(receivedDecryptHash,localHash));
 
         return Arrays.equals(receivedDecryptHash,localHash);
     }
@@ -100,5 +106,29 @@ public class AsymmetricCrypto {
         X509Certificate certificate = (X509Certificate)f.generateCertificate(fin);
 
         return certificate.getPublicKey();
+    }
+
+    public static String transformTripletToString(ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> quartets) throws UnsupportedEncodingException {
+
+        String result = "";
+
+        for (Quartet<Integer, String, byte[], ArrayList<Integer>> triplet : quartets){
+            result += "" + triplet.getValue0() + triplet.getValue1() + new String(triplet.getValue2(), "UTF-8") + triplet.getValue3();
+
+        }
+
+        return result;
+    }
+
+    public static String transformQuartetToString(ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> quintets) throws UnsupportedEncodingException {
+
+        String result = "";
+
+        for (Quintet<Integer, String, String, byte[], ArrayList<Integer>> quartet : quintets){
+            result += "" + quartet.getValue0() + quartet.getValue1() + quartet.getValue2() + new String(quartet.getValue3(), "UTF-8") + quartet.getValue4();
+
+        }
+
+        return result;
     }
 }

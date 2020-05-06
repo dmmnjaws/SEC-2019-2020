@@ -5,17 +5,17 @@ import java.io.Serializable;
 public class Acknowledge implements Serializable {
     private String message;
     private byte [] signature;
-    private int seqNumber;
+    private int wts;
 
     public Acknowledge(String message, byte [] signature){
         this.message = message;
         this.signature = signature;
     }
 
-    public Acknowledge(int seqNumber, String message, byte [] signature){
+    public Acknowledge(int wts, String message, byte [] signature){
         this.message = message;
         this.signature = signature;
-        this.seqNumber = seqNumber;
+        this.wts = wts;
     }
 
     public String getMessage() {
@@ -26,5 +26,5 @@ public class Acknowledge implements Serializable {
         return this.signature;
     }
 
-    public int getSeqNumber() { return this.seqNumber; }
+    public int getWts() { return this.wts; }
 }

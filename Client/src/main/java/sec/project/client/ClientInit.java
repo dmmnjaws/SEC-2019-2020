@@ -2,6 +2,7 @@ package sec.project.client;
 
 import sec.project.library.ClientAPI;
 
+import java.rmi.ConnectException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.*;
@@ -44,6 +45,9 @@ public class ClientInit {
 
             System.err.println( "\nClient ready." );
             client.execute();
+
+        } catch (ConnectException e){
+            System.out.println("\nServers aren't listening in one or more of the inserted ports.");
 
         } catch (Exception e) {
 
