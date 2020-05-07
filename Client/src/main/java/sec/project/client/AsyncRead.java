@@ -53,7 +53,8 @@ public class AsyncRead implements Runnable {
                 }
 
                 if (valid && readResponse.getAnnounces().size() != 0) {
-                    this.client.getReadResponses().add(readResponse);
+                    this.client.getReadResponses().put(this.stub.getKey(), readResponse);
+                    this.client.incrementNumberOfReadResponses();
                 }
 
             } else {

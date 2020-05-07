@@ -9,13 +9,13 @@ import java.util.Map;
 
 public class AsyncPostGeneral implements Runnable {
 
-    private ClientAPI stub;
+    private Map.Entry<PublicKey, ClientAPI> stub;
     private Client client;
     private int postGeneralWts;
     private String message;
     private byte[] signature;
 
-    public AsyncPostGeneral(ClientAPI stub, Client client, int postGeneralWts, String message, byte[] signature){
+    public AsyncPostGeneral(Map.Entry<PublicKey, ClientAPI> stub, Client client, int postGeneralWts, String message, byte[] signature){
         this.stub = stub;
         this.client = client;
         this.postGeneralWts = postGeneralWts;
@@ -27,10 +27,11 @@ public class AsyncPostGeneral implements Runnable {
     public void run() {
 
         try {
-            Acknowledge acknowledge = this.stub.postGeneral(this.client.getClientPublicKey(), message, this.postGeneralWts, signature, null, null);
+            Acknowledge acknowledge = this.stub.getValue().postGeneral(this.client.getClientPublicKey(), message, this.postGeneralWts, signature, null, null);
 
             if (acknowledge.getWts() == this.postGeneralWts){
-                this.client.getPostGeneralAcks().add(acknowledge);
+                this.client.getPostGeneralAcks().put(this.stub.getKey(), acknowledge);
+                this.client.incrementNumberOfPostGeneralAcks();
             }
 
         } catch (RemoteException e){

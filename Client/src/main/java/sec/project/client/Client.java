@@ -1,17 +1,14 @@
 package sec.project.client;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.javatuples.Pair;
 import org.javatuples.Quartet;
 import org.javatuples.Quintet;
-import org.javatuples.Triplet;
 import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
 import sec.project.library.ReadView;
 
 import java.io.*;
-import java.rmi.ConnectException;
 import java.security.*;
 import java.util.*;
 
@@ -30,13 +27,13 @@ public class Client {
     private int postGeneralWts;
     private int readRid;
     private int readGeneralRid;
-    private ArrayList<Acknowledge> postAcks;
+    private Map<PublicKey, Acknowledge> postAcks;
     private int numberOfPostAcks;
-    private ArrayList<Acknowledge> postGeneralAcks;
+    private Map<PublicKey, Acknowledge> postGeneralAcks;
     private int numberOfPostGeneralAcks;
-    private ArrayList<ReadView> readResponses;
+    private Map<PublicKey, ReadView> readResponses;
     private int numberOfReadResponses;
-    private ArrayList<ReadView> readGeneralResponses;
+    private Map<PublicKey, ReadView> readGeneralResponses;
     private int numberOfReadGeneralResponses;
     private Map<PublicKey, String> loginResponses;
     private int numberOfLoginResponses;
@@ -81,10 +78,10 @@ public class Client {
 
     public void execute() {
 
-        this.postAcks = new ArrayList<>();
-        this.postGeneralAcks = new ArrayList<>();
-        this.readResponses = new ArrayList<>();
-        this.readGeneralResponses = new ArrayList<>();
+        this.postAcks = new HashMap<>();
+        this.postGeneralAcks = new HashMap<>();
+        this.readResponses = new HashMap<>();
+        this.readGeneralResponses = new HashMap<>();
         this.loginResponses = new HashMap<>();
         this.seqNumber = 1;
         this.postWts = 0;
@@ -137,12 +134,12 @@ public class Client {
 
                         this.postWts++;
 
-                        this.postAcks = new ArrayList<>();
+                        this.postAcks = new HashMap<>();
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postWts, this.clientPrivateKey);
 
                         for (Map.Entry<PublicKey, ClientAPI> entry : this.serverPublicKeys.entrySet()) {
-                            AsyncPost post = new AsyncPost(entry.getValue(), this, message, signature);
+                            AsyncPost post = new AsyncPost(entry, this, message, signature);
                             new Thread(post).start();
                         }
 
@@ -151,7 +148,7 @@ public class Client {
 
                             Thread.sleep(10);
                             seconds++;
-                            if (seconds > 1000){
+                            if (seconds > 1000) {
                                 System.out.println("TIMEOUT: Wasn't able to finish post operation.");
                                 break;
                             }
@@ -177,12 +174,12 @@ public class Client {
 
                         this.postGeneralWts++;
 
-                        this.postGeneralAcks = new ArrayList<>();
+                        this.postGeneralAcks = new HashMap<>();
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postGeneralWts + this.clientNumber, this.clientPrivateKey);
 
                         for (Map.Entry<PublicKey, ClientAPI> entry : this.serverPublicKeys.entrySet()) {
-                            AsyncPostGeneral postGeneral = new AsyncPostGeneral(entry.getValue(),this, this.postGeneralWts, message, signature);
+                            AsyncPostGeneral postGeneral = new AsyncPostGeneral(entry, this, this.postGeneralWts, message, signature);
                             new Thread(postGeneral).start();
                         }
 
@@ -191,7 +188,7 @@ public class Client {
 
                             Thread.sleep(10);
                             seconds++;
-                            if (seconds > 1000){
+                            if (seconds > 1000) {
                                 System.out.println("TIMEOUT: Wasn't able to finish postGeneral operation.");
                                 break;
                             }
@@ -203,15 +200,24 @@ public class Client {
 
                     case "read":
 
-                        System.out.println("\nWrite the number of the client whose announcement board you want to read:");
-                        PublicKey toReadClientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + scanner.nextLine() + "_certificate.crt");
+                        PublicKey toReadClientPublicKey = null;
+
+                        try{
+
+                            System.out.println("\nWrite the number of the client whose announcement board you want to read:");
+                            toReadClientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + scanner.nextLine() + "_certificate.crt");
+
+                        } catch (FileNotFoundException e){
+                            System.out.println("The client you indicated does not exist.");
+                            break;
+                        }
 
                         System.out.println("\nHow many announcements do you want to see?");
                         numberOfAnnouncements = scanner.nextLine();
 
                         this.readRid++;
 
-                        this.readResponses = new ArrayList<>();
+                        this.readResponses = new HashMap<>();
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString()
                                 + numberOfAnnouncements + this.readRid, this.clientPrivateKey);
@@ -226,7 +232,7 @@ public class Client {
 
                             Thread.sleep(10);
                             seconds++;
-                            if (seconds > 1000){
+                            if (seconds > 1000) {
                                 System.out.println("TIMEOUT: Wasn't able to finish read operation.");
                                 break;
                             }
@@ -237,14 +243,14 @@ public class Client {
 
                         int maxWts = 0;
                         int numberOfAnnoucesServer = 0;
-                        for (ReadView readView : this.readResponses) {
-                            for (Quartet<Integer, String, byte[], ArrayList<Integer>> triplet : readView.getAnnounces()) {
+                        for (Map.Entry<PublicKey, ReadView> entry : this.readResponses.entrySet()) {
+                            for (Quartet<Integer, String, byte[], ArrayList<Integer>> triplet : entry.getValue().getAnnounces()) {
 
                                 if (maxWts < triplet.getValue0()) {
                                     maxWts = triplet.getValue0();
                                 }
 
-                                if(!announcements.containsKey(triplet.getValue0())) {
+                                if (!announcements.containsKey(triplet.getValue0())) {
                                     announcements.put(triplet.getValue0(), triplet);
                                     numberOfAnnoucesServer++;
                                 }
@@ -253,9 +259,9 @@ public class Client {
                         }
 
                         int aux;
-                        if(numberOfAnnoucesServer < Integer.parseInt(numberOfAnnouncements)){
+                        if (numberOfAnnoucesServer < Integer.parseInt(numberOfAnnouncements)) {
                             aux = numberOfAnnoucesServer;
-                        }else{
+                        } else {
                             aux = Integer.parseInt(numberOfAnnouncements);
                         }
 
@@ -264,7 +270,7 @@ public class Client {
                             Quartet<Integer, String, byte[], ArrayList<Integer>> announcement = announcements.get(i);
 
                             String originalRefs = "";
-                            for(int j=0; j<announcement.getValue3().size(); j++){
+                            for (int j = 0; j < announcement.getValue3().size(); j++) {
                                 originalRefs += announcement.getValue3().get(j) + " ";
                             }
 
@@ -276,7 +282,7 @@ public class Client {
                             //writeback
 
                             for (Map.Entry<PublicKey, ClientAPI> entry : this.serverPublicKeys.entrySet()) {
-                                AsyncPost writeBack = new AsyncPost(entry.getValue(), this, announcement.getValue0(), toReadClientPublicKey, announcement.getValue1(), announcement.getValue2());
+                                AsyncPost writeBack = new AsyncPost(entry, this, announcement.getValue0(), toReadClientPublicKey, announcement.getValue1(), announcement.getValue2());
                                 new Thread(writeBack).start();
                             }
 
@@ -285,7 +291,7 @@ public class Client {
 
                                 Thread.sleep(10);
                                 seconds++;
-                                if (seconds > 1000){
+                                if (seconds > 1000) {
                                     System.out.println("TIMEOUT: Wasn't able to finish writeback operation.");
                                     break;
                                 }
@@ -305,12 +311,12 @@ public class Client {
 
                         this.readGeneralRid++;
 
-                        this.readGeneralResponses = new ArrayList<>();
+                        this.readGeneralResponses = new HashMap<>();
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(numberOfAnnouncements + this.readGeneralRid, this.clientPrivateKey);
 
                         for (Map.Entry<PublicKey, ClientAPI> entry : this.serverPublicKeys.entrySet()) {
-                            AsyncReadGeneral readGeneral = new AsyncReadGeneral(entry,this, Integer.parseInt(numberOfAnnouncements), signature);
+                            AsyncReadGeneral readGeneral = new AsyncReadGeneral(entry, this, Integer.parseInt(numberOfAnnouncements), signature);
                             new Thread(readGeneral).start();
                         }
 
@@ -319,7 +325,7 @@ public class Client {
 
                             Thread.sleep(10);
                             seconds++;
-                            if (seconds > 1000){
+                            if (seconds > 1000) {
                                 System.out.println("TIMEOUT: Wasn't able to finish readGeneral operation.");
                                 break;
                             }
@@ -329,19 +335,19 @@ public class Client {
                         int versionGeneral = 0;
                         ReadView mostUpdatedGeneral = null;
 
-                        for (ReadView readView : this.readGeneralResponses) {
-                            int receivedVersion = readView.getAnnouncesGeneral().get(readView.getAnnouncesGeneral().size() - 1).getValue0();
+                        for (Map.Entry<PublicKey, ReadView> entry : this.readGeneralResponses.entrySet()) {
+                            int receivedVersion = entry.getValue().getAnnouncesGeneral().get(entry.getValue().getAnnouncesGeneral().size() - 1).getValue0();
 
                             if (receivedVersion > versionGeneral) {
                                 versionGeneral = receivedVersion;
-                                mostUpdatedGeneral = readView;
+                                mostUpdatedGeneral = entry.getValue();
                             }
                         }
 
                         for (Quintet<Integer, String, String, byte[], ArrayList<Integer>> announce : mostUpdatedGeneral.getAnnouncesGeneral()) {
 
                             String originalRefs = "";
-                            for(int j=0; j<announce.getValue4().size(); j++){
+                            for (int j = 0; j < announce.getValue4().size(); j++) {
                                 originalRefs += announce.getValue4().get(j) + " ";
                             }
 
@@ -402,14 +408,14 @@ public class Client {
     public int getReadGeneralRid() { return readGeneralRid; }
     public Map<PublicKey, ClientAPI> getServerPublicKeys() { return serverPublicKeys; }
     public PublicKey getClientPublicKey() { return clientPublicKey; }
-    public ArrayList<Acknowledge> getPostAcks() { return postAcks; }
-    public ArrayList<Acknowledge> getPostGeneralAcks() { return postGeneralAcks; }
-    public ArrayList<ReadView> getReadResponses() { return readResponses; }
-    public ArrayList<ReadView> getReadGeneralResponses() { return readGeneralResponses; }
+    public Map<PublicKey, Acknowledge> getPostAcks() { return postAcks; }
+    public Map<PublicKey, Acknowledge> getPostGeneralAcks() { return postGeneralAcks; }
+    public Map<PublicKey, ReadView> getReadResponses() { return readResponses; }
+    public Map<PublicKey, ReadView> getReadGeneralResponses() { return readGeneralResponses; }
     public Map<PublicKey, String> getLoginResponses() { return loginResponses; }
-    protected void incrementMumberOfPostAcks(){ this.numberOfPostAcks++; }
-    protected void incrementNnumberOfPostGeneralAcks(){ this.numberOfPostGeneralAcks++; }
-    protected void incrementNnumberOfReadResponses(){ this.numberOfReadResponses++; }
+    protected void incrementNumberOfPostAcks(){ this.numberOfPostAcks++; }
+    protected void incrementNumberOfPostGeneralAcks(){ this.numberOfPostGeneralAcks++; }
+    protected void incrementNumberOfReadResponses(){ this.numberOfReadResponses++; }
     protected void incrementNumberOfReadGeneralResponses(){ this.numberOfReadGeneralResponses++; }
     protected void incrementNumberOfLoginResponses(){ this.numberOfLoginResponses++; }
 
