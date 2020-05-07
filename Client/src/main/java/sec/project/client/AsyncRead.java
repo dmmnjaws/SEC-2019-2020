@@ -52,7 +52,7 @@ public class AsyncRead implements Runnable {
                     }
                 }
 
-                if (valid && readResponse.getAnnounces().size() != 0) {
+                if (valid) {
                     this.client.getReadResponses().put(this.stub.getKey(), readResponse);
                     this.client.incrementNumberOfReadResponses();
                 }
@@ -62,7 +62,11 @@ public class AsyncRead implements Runnable {
             }
 
         } catch (RemoteException e1){
-            e1.printStackTrace();
+
+            System.out.println("\n" + e1.getMessage());
+            this.client.getReadResponses().put(this.stub.getKey(), null);
+            this.client.incrementNumberOfReadResponses();
+            return;
         } catch (Exception e2){
             e2.printStackTrace();
         }

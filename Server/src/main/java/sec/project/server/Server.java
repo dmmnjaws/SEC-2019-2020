@@ -13,6 +13,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.io.*;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.security.*;
 import java.util.*;
@@ -209,9 +210,14 @@ public class Server implements ClientAPI {
     @Override
     public ReadView read(PublicKey toReadClientPublicKey, int number, int rid , byte[] signature, PublicKey clientPublicKey) throws RemoteException {
 
-        try{
-            System.out.println("\n-------------------------------------------------------------\n" +
-                    "client called the read() method to read client" + clientList.get(toReadClientPublicKey).getClientNumber() + "'s announcements.");
+        try {
+            try {
+                System.out.println("\n-------------------------------------------------------------\n" +
+                        "client called the read() method to read client" + clientList.get(toReadClientPublicKey).getClientNumber() + "'s announcements.");
+            } catch (NullPointerException e) {
+                throw new RemoteException("\nThe server registered in port " + this.serverPort + " reports the client you indicated is not registered.");
+            }
+
 
             ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> triplets = this.clientList.get(toReadClientPublicKey).read(number, rid, signature, clientPublicKey);
             return new ReadView(triplets, rid, AsymmetricCrypto.wrapDigitalSignature(AsymmetricCrypto.transformTripletToString(triplets) + rid, this.serverPrivateKey));
@@ -236,6 +242,8 @@ public class Server implements ClientAPI {
 
             //}
 
+        } catch (RemoteException e) {
+            throw new RemoteException(e.getMessage());
         } catch (NullPointerException e) {
             e.printStackTrace();
             System.out.println("\nInvalid Request!");

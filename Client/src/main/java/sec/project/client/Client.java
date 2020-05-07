@@ -150,7 +150,7 @@ public class Client {
                             Thread.sleep(10);
                             seconds++;
                             if (seconds > 1000) {
-                                System.out.println("TIMEOUT: Wasn't able to finish post operation.");
+                                System.out.println("\nTIMEOUT: Wasn't able to finish post operation.");
                                 break;
                             }
 
@@ -191,7 +191,7 @@ public class Client {
                             Thread.sleep(10);
                             seconds++;
                             if (seconds > 1000) {
-                                System.out.println("TIMEOUT: Wasn't able to finish postGeneral operation.");
+                                System.out.println("\nTIMEOUT: Wasn't able to finish postGeneral operation.");
                                 break;
                             }
 
@@ -210,7 +210,7 @@ public class Client {
                             toReadClientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + scanner.nextLine() + "_certificate.crt");
 
                         } catch (FileNotFoundException e){
-                            System.out.println("The client you indicated does not exist.");
+                            System.out.println("\nThe client you indicated does not exist.");
                             break;
                         }
 
@@ -236,7 +236,7 @@ public class Client {
                             Thread.sleep(10);
                             seconds++;
                             if (seconds > 1000) {
-                                System.out.println("TIMEOUT: Wasn't able to finish read operation.");
+                                System.out.println("\nTIMEOUT: Wasn't able to finish read operation.");
                                 break;
                             }
 
@@ -247,18 +247,28 @@ public class Client {
                         int maxWts = 0;
                         int numberOfAnnoucesServer = 0;
                         for (Map.Entry<PublicKey, ReadView> entry : this.readResponses.entrySet()) {
-                            for (Quartet<Integer, String, byte[], ArrayList<Integer>> triplet : entry.getValue().getAnnounces()) {
 
-                                if (maxWts < triplet.getValue0()) {
-                                    maxWts = triplet.getValue0();
+                            if(entry.getValue() != null){
+                                if(entry.getValue().getAnnounces().size() != 0){
+                                    for (Quartet<Integer, String, byte[], ArrayList<Integer>> triplet : entry.getValue().getAnnounces()) {
+
+                                        if (maxWts < triplet.getValue0()) {
+                                            maxWts = triplet.getValue0();
+                                        }
+
+                                        if (!announcements.containsKey(triplet.getValue0())) {
+                                            announcements.put(triplet.getValue0(), triplet);
+                                            numberOfAnnoucesServer++;
+                                        }
+
+                                    }
                                 }
-
-                                if (!announcements.containsKey(triplet.getValue0())) {
-                                    announcements.put(triplet.getValue0(), triplet);
-                                    numberOfAnnoucesServer++;
-                                }
-
                             }
+                        }
+
+                        if (maxWts == 0){
+                            System.out.println("\nThere are no announcements to show.");
+                            break;
                         }
 
                         int aux;
@@ -298,7 +308,7 @@ public class Client {
                                 Thread.sleep(10);
                                 seconds++;
                                 if (seconds > 1000) {
-                                    System.out.println("TIMEOUT: Wasn't able to finish writeback operation.");
+                                    System.out.println("\nTIMEOUT: Wasn't able to finish writeback operation.");
                                     break;
                                 }
 
@@ -333,7 +343,7 @@ public class Client {
                             Thread.sleep(10);
                             seconds++;
                             if (seconds > 1000) {
-                                System.out.println("TIMEOUT: Wasn't able to finish readGeneral operation.");
+                                System.out.println("\nTIMEOUT: Wasn't able to finish readGeneral operation.");
                                 break;
                             }
 
@@ -343,13 +353,24 @@ public class Client {
                         ReadView mostUpdatedGeneral = null;
 
                         for (Map.Entry<PublicKey, ReadView> entry : this.readGeneralResponses.entrySet()) {
-                            int receivedVersion = entry.getValue().getAnnouncesGeneral().get(entry.getValue().getAnnouncesGeneral().size() - 1).getValue0();
 
-                            if (receivedVersion > versionGeneral) {
-                                versionGeneral = receivedVersion;
-                                mostUpdatedGeneral = entry.getValue();
+                            if(entry.getValue().getAnnounces() != null) {
+                                if (entry.getValue().getAnnounces().size() != 0) {
+                                    int receivedVersion = entry.getValue().getAnnouncesGeneral().get(entry.getValue().getAnnouncesGeneral().size() - 1).getValue0();
+
+                                    if (receivedVersion > versionGeneral) {
+                                        versionGeneral = receivedVersion;
+                                        mostUpdatedGeneral = entry.getValue();
+                                    }
+                                }
                             }
                         }
+
+                        if(versionGeneral == 0){
+                            System.out.println("\nThere are no announcements to show.");
+                            break;
+                        }
+
 
                         for (Quintet<Integer, String, String, byte[], ArrayList<Integer>> announce : mostUpdatedGeneral.getAnnouncesGeneral()) {
 
@@ -440,7 +461,7 @@ public class Client {
             Thread.sleep(10);
             seconds++;
             if (seconds > 1000){
-                System.out.println("TIMEOUT: Wasn't able to finish postGeneral operation.");
+                System.out.println("\nTIMEOUT: Wasn't able to finish postGeneral operation.");
                 break;
             }
 

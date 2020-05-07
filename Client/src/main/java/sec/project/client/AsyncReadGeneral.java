@@ -50,7 +50,7 @@ public class AsyncReadGeneral implements Runnable {
                     }
                 }
 
-                if(valid && readGeneralResponse.getAnnouncesGeneral().size() != 0){
+                if(valid){
                     this.client.getReadGeneralResponses().put(this.stub.getKey(), readGeneralResponse);
                     this.client.incrementNumberOfReadGeneralResponses();
                 }
