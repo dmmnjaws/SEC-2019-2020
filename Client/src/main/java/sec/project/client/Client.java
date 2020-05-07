@@ -354,8 +354,8 @@ public class Client {
 
                         for (Map.Entry<PublicKey, ReadView> entry : this.readGeneralResponses.entrySet()) {
 
-                            if(entry.getValue().getAnnounces() != null) {
-                                if (entry.getValue().getAnnounces().size() != 0) {
+                            if(entry.getValue().getAnnouncesGeneral() != null) {
+                                if (entry.getValue().getAnnouncesGeneral().size() != 0) {
                                     int receivedVersion = entry.getValue().getAnnouncesGeneral().get(entry.getValue().getAnnouncesGeneral().size() - 1).getValue0();
 
                                     if (receivedVersion > versionGeneral) {
