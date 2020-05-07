@@ -62,11 +62,12 @@ public class AsyncRead implements Runnable {
             }
 
         } catch (RemoteException e1){
-
             System.out.println("\n" + e1.getMessage());
             this.client.getReadResponses().put(this.stub.getKey(), null);
             this.client.incrementNumberOfReadResponses();
+            this.client.setException(true);
             return;
+
         } catch (Exception e2){
             e2.printStackTrace();
         }

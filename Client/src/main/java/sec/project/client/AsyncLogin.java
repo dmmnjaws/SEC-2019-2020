@@ -4,6 +4,7 @@ import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
 
+import java.rmi.RemoteException;
 import java.security.PublicKey;
 import java.util.Map;
 
@@ -28,9 +29,16 @@ public class AsyncLogin implements Runnable {
                 this.client.incrementNumberOfLoginResponses();
             }
 
+        } catch (RemoteException e1) {
+            System.out.println("\n" + e1.getMessage());
+            this.client.getLoginResponses().put(this.stub.getKey(), null);
+            this.client.incrementNumberOfLoginResponses();
+            this.client.setException(true);
+            return;
+
         } catch (Exception e){
             e.printStackTrace();
-            System.out.println("Failed retrieving the postWts and postGeneralWts from the servers");
+            System.out.println("\nFailed retrieving the postWts and postGeneralWts from the servers.");
         }
 
     }

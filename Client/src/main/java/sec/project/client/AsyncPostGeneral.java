@@ -34,8 +34,13 @@ public class AsyncPostGeneral implements Runnable {
                 this.client.incrementNumberOfPostGeneralAcks();
             }
 
-        } catch (RemoteException e){
-            e.printStackTrace();
+        } catch (RemoteException e1) {
+            System.out.println("\n" + e1.getMessage());
+            this.client.getPostGeneralAcks().put(this.stub.getKey(), null);
+            this.client.incrementNumberOfPostGeneralAcks();
+            this.client.setException(true);
+            return;
+
         }
     }
 

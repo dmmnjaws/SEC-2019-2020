@@ -2,18 +2,11 @@ package sec.project.server;
 
 import org.javatuples.Quartet;
 import org.javatuples.Quintet;
-import org.javatuples.Triplet;
 import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
 import sec.project.library.ReadView;
-import sun.security.mscapi.CPublicKey;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.*;
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.security.*;
 import java.util.*;
@@ -122,8 +115,12 @@ public class Server implements ClientAPI {
     public Acknowledge post(PublicKey clientPublicKey, String message, int wts, byte [] signature) throws RemoteException {
 
         try {
-            System.out.println("\n-------------------------------------------------------------\n" +
-                    "client" + clientList.get(clientPublicKey).getClientNumber() + " called post() method.");
+            try {
+                System.out.println("\n-------------------------------------------------------------\n" +
+                        "client" + clientList.get(clientPublicKey).getClientNumber() + " called post() method.");
+            } catch (NullPointerException e) {
+                throw new RemoteException("\nThe server registered in port " + this.serverPort + " reports that you are not registered yet. \nIf you're unsure if this is right, please type the 'register' command.");
+            }
 
             String ack = this.clientList.get(clientPublicKey).write(wts, message, signature);
             saveState();
@@ -146,6 +143,8 @@ public class Server implements ClientAPI {
             //    System.out.println("\nDEBUG: boolean - equal seqNumbers?\n" + (clientList.get(clientPublicKey).getSeqNumber() == seqNumber));
             //    throw new Exception("\nInvalid signature.");
 
+        } catch (RemoteException e) {
+            throw new RemoteException(e.getMessage());
 
         } catch (NullPointerException e) {
             e.printStackTrace();
@@ -165,8 +164,13 @@ public class Server implements ClientAPI {
                                    byte[] senderServerSignature, PublicKey senderServerPublicKey) throws RemoteException {
 
         try{
-            System.out.println("\n-------------------------------------------------------------\n" +
-                    "client" + clientList.get(clientPublicKey).getClientNumber() + " called postGeneral() method.");
+            try {
+                System.out.println("\n-------------------------------------------------------------\n" +
+                        "client" + clientList.get(clientPublicKey).getClientNumber() + " called postGeneral() method.");
+            } catch (NullPointerException e) {
+                throw new RemoteException("\nThe server registered in port " + this.serverPort + " reports that you are not registered yet. \nIf you're unsure if this is right, please type the 'register' command.");
+            }
+
 
             String ack = this.generalBoard.write(wts, message, clientList.get(clientPublicKey).getClientNumber(), signature, clientPublicKey,
                     senderServerSignature, senderServerPublicKey, this.serverPrivateKey, this.serverPublicKey, this.stubs);
@@ -193,6 +197,8 @@ public class Server implements ClientAPI {
 
             //}
 
+        } catch (RemoteException e) {
+            throw new RemoteException(e.getMessage());
 
         } catch (NullPointerException e) {
             e.printStackTrace();
@@ -211,6 +217,12 @@ public class Server implements ClientAPI {
     public ReadView read(PublicKey toReadClientPublicKey, int number, int rid , byte[] signature, PublicKey clientPublicKey) throws RemoteException {
 
         try {
+            try {
+                clientList.get(clientPublicKey).getClientNumber();
+            } catch (NullPointerException e) {
+                throw new RemoteException("\nThe server registered in port " + this.serverPort + " reports that you are not registered yet. \nIf you're unsure if this is right, please type the 'register' command.");
+            }
+
             try {
                 System.out.println("\n-------------------------------------------------------------\n" +
                         "client called the read() method to read client" + clientList.get(toReadClientPublicKey).getClientNumber() + "'s announcements.");
@@ -244,10 +256,12 @@ public class Server implements ClientAPI {
 
         } catch (RemoteException e) {
             throw new RemoteException(e.getMessage());
+
         } catch (NullPointerException e) {
             e.printStackTrace();
             System.out.println("\nInvalid Request!");
             throw new RemoteException("\nInvalid Request!");
+
         } catch (Exception e){
             e.printStackTrace();
             throw new RemoteException("\nDecryption error");
@@ -259,6 +273,12 @@ public class Server implements ClientAPI {
     public ReadView readGeneral(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws RemoteException {
 
         try {
+            try {
+                clientList.get(clientPublicKey).getClientNumber();
+            } catch (NullPointerException e) {
+                throw new RemoteException("\nThe server registered in port " + this.serverPort + " reports that you are not registered yet. \nIf you're unsure if this is right, please type the 'register' command.");
+            }
+
             System.out.println("\n-------------------------------------------------------------\n" +
                 "A client called the readGeneral() method.");
 
@@ -285,6 +305,9 @@ public class Server implements ClientAPI {
 
             //}
 
+        } catch (RemoteException e) {
+            throw new RemoteException(e.getMessage());
+
         } catch (Exception e) {
             e.printStackTrace();
             throw new RemoteException("\nDecryption error");
@@ -298,6 +321,10 @@ public class Server implements ClientAPI {
             String message = "" + this.clientList.get(clientPublicKey).getOneNAtomicRegister().getWts() + "|" + this.generalBoard.getnNRegularRegister().getWts();
             System.out.println("DEBUG: " + message);
             return new Acknowledge(message, AsymmetricCrypto.wrapDigitalSignature(message, this.serverPrivateKey));
+
+        } catch (NullPointerException e) {
+            throw new RemoteException("\nThe server registered in port " + this.serverPort + " reports that you are not registered yet. \nIf you're unsure if this is right, please type the 'register' command.");
+
         } catch (Exception e) {
             e.printStackTrace();
             throw new RemoteException("\nLogin error");

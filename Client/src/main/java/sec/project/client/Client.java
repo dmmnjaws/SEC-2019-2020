@@ -37,6 +37,7 @@ public class Client {
     private int numberOfReadGeneralResponses;
     private Map<PublicKey, String> loginResponses;
     private int numberOfLoginResponses;
+    private boolean exception;
 
     public Client (Map<Integer, ClientAPI> stubs) {
 
@@ -88,6 +89,7 @@ public class Client {
         this.postGeneralWts = 0;
         this.readRid = 0;
         this.readGeneralRid = 0;
+        this.exception = false;
 
         while (true) {
 
@@ -132,6 +134,8 @@ public class Client {
                         System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
                         message += scanner.nextLine();
 
+                        this.exception = false;
+
                         this.postWts++;
 
                         this.postAcks = new HashMap<>();
@@ -156,7 +160,6 @@ public class Client {
 
                         }
 
-                        System.out.println("\nSuccessfully posted.");
                         break;
 
                     case "postGeneral":
@@ -170,6 +173,8 @@ public class Client {
 
                         System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
                         message += scanner.nextLine();
+
+                        this.exception = false;
 
                         login();
 
@@ -197,7 +202,6 @@ public class Client {
 
                         }
 
-                        System.out.println("\nSuccessfully posted.");
                         break;
 
                     case "read":
@@ -216,6 +220,8 @@ public class Client {
 
                         System.out.println("\nHow many announcements do you want to see?");
                         numberOfAnnouncements = scanner.nextLine();
+
+                        this.exception = false;
 
                         this.readRid++;
 
@@ -267,7 +273,9 @@ public class Client {
                         }
 
                         if (maxWts == 0){
-                            System.out.println("\nThere are no announcements to show.");
+                            if(this.exception == false){
+                                System.out.println("\nThere are no announcements to show.");
+                            }
                             break;
                         }
 
@@ -325,6 +333,8 @@ public class Client {
                         System.out.println("\nHow many announcements do you want to see?");
                         numberOfAnnouncements = scanner.nextLine();
 
+                        this.exception = false;
+
                         this.readGeneralRid++;
 
                         this.readGeneralResponses = new HashMap<>();
@@ -354,7 +364,7 @@ public class Client {
 
                         for (Map.Entry<PublicKey, ReadView> entry : this.readGeneralResponses.entrySet()) {
 
-                            if(entry.getValue().getAnnouncesGeneral() != null) {
+                            if(entry.getValue() != null) {
                                 if (entry.getValue().getAnnouncesGeneral().size() != 0) {
                                     int receivedVersion = entry.getValue().getAnnouncesGeneral().get(entry.getValue().getAnnouncesGeneral().size() - 1).getValue0();
 
@@ -367,7 +377,9 @@ public class Client {
                         }
 
                         if(versionGeneral == 0){
-                            System.out.println("\nThere are no announcements to show.");
+                            if(this.exception == false){
+                                System.out.println("\nThere are no announcements to show.");
+                            }
                             break;
                         }
 
@@ -446,6 +458,7 @@ public class Client {
     protected void incrementNumberOfReadResponses(){ this.numberOfReadResponses++; }
     protected void incrementNumberOfReadGeneralResponses(){ this.numberOfReadGeneralResponses++; }
     protected void incrementNumberOfLoginResponses(){ this.numberOfLoginResponses++; }
+    protected void setException(boolean exception){ this.exception = exception; }
 
     private void login() throws InterruptedException {
 
@@ -475,25 +488,29 @@ public class Client {
             Pair<Integer, Integer> resultWtsGeneral = new Pair<>(this.postGeneralWts, 0);
 
             for(Map.Entry<PublicKey, String> entry : this.loginResponses.entrySet()){
-                String[] responses = entry.getValue().split("|");
 
-                if(responses.length >= 3){
-                    int newWts = Integer.parseInt(responses[0]);
-                    int newGeneralWts = Integer.parseInt(responses[2]);
+                if(entry.getValue() != null){
 
-                    if (newWts > this.postWts) {
-                        if (wtsCounts.containsKey(newWts)) {
-                            wtsCounts.put(newWts, wtsCounts.get(newWts) + 1);
-                        } else {
-                            wtsCounts.put(newWts, 1);
+                    String[] responses = entry.getValue().split("|");
+
+                    if(responses.length >= 3){
+                        int newWts = Integer.parseInt(responses[0]);
+                        int newGeneralWts = Integer.parseInt(responses[2]);
+
+                        if (newWts > this.postWts) {
+                            if (wtsCounts.containsKey(newWts)) {
+                                wtsCounts.put(newWts, wtsCounts.get(newWts) + 1);
+                            } else {
+                                wtsCounts.put(newWts, 1);
+                            }
                         }
-                    }
 
-                    if (newGeneralWts > this.postGeneralWts) {
-                        if (wtsGeneralCounts.containsKey(newGeneralWts)) {
-                            wtsGeneralCounts.put(newGeneralWts, wtsGeneralCounts.get(newGeneralWts) + 1);
-                        } else {
-                            wtsGeneralCounts.put(newGeneralWts, 1);
+                        if (newGeneralWts > this.postGeneralWts) {
+                            if (wtsGeneralCounts.containsKey(newGeneralWts)) {
+                                wtsGeneralCounts.put(newGeneralWts, wtsGeneralCounts.get(newGeneralWts) + 1);
+                            } else {
+                                wtsGeneralCounts.put(newGeneralWts, 1);
+                            }
                         }
                     }
                 }

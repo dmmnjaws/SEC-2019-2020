@@ -64,8 +64,13 @@ public class AsyncPost implements Runnable {
                 this.client.incrementNumberOfPostAcks();
             }
 
-        } catch (RemoteException e){
-            e.printStackTrace();
+        } catch (RemoteException e1) {
+            System.out.println("\n" + e1.getMessage());
+            this.client.getPostAcks().put(this.stub.getKey(), null);
+            this.client.incrementNumberOfPostAcks();
+            this.client.setException(true);
+            return;
+
         }
     }
 

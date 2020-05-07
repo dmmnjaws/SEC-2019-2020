@@ -61,7 +61,12 @@ public class AsyncReadGeneral implements Runnable {
 
 
         } catch (RemoteException e1){
-            e1.printStackTrace();
+            System.out.println("\n" + e1.getMessage());
+            this.client.getReadGeneralResponses().put(this.stub.getKey(), null);
+            this.client.incrementNumberOfReadGeneralResponses();
+            this.client.setException(true);
+            return;
+
         } catch (Exception e2){
             e2.printStackTrace();
         }
