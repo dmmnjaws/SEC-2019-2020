@@ -287,7 +287,8 @@ public class Server implements ClientAPI {
     public Acknowledge login(PublicKey clientPublicKey) throws RemoteException {
 
         try {
-            String message = "" + this.clientList.get(clientPublicKey).getOneNRegularRegister().getWts() + "|" + this.generalBoard.getnNRegularRegister().getRid();
+            String message = "" + this.clientList.get(clientPublicKey).getOneNAtomicRegister().getWts() + "|" + this.generalBoard.getnNRegularRegister().getWts();
+            System.out.println("DEBUG: " + message);
             return new Acknowledge(message, AsymmetricCrypto.wrapDigitalSignature(message, this.serverPrivateKey));
         } catch (Exception e) {
             e.printStackTrace();

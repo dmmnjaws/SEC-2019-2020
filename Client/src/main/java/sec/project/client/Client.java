@@ -1,6 +1,7 @@
 package sec.project.client;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.javatuples.Pair;
 import org.javatuples.Quartet;
 import org.javatuples.Quintet;
 import org.javatuples.Triplet;
@@ -30,9 +31,15 @@ public class Client {
     private int readRid;
     private int readGeneralRid;
     private ArrayList<Acknowledge> postAcks;
+    private int numberOfPostAcks;
     private ArrayList<Acknowledge> postGeneralAcks;
+    private int numberOfPostGeneralAcks;
     private ArrayList<ReadView> readResponses;
+    private int numberOfReadResponses;
     private ArrayList<ReadView> readGeneralResponses;
+    private int numberOfReadGeneralResponses;
+    private Map<PublicKey, String> loginResponses;
+    private int numberOfLoginResponses;
 
     public Client (Map<Integer, ClientAPI> stubs) {
 
@@ -78,6 +85,12 @@ public class Client {
         this.postGeneralAcks = new ArrayList<>();
         this.readResponses = new ArrayList<>();
         this.readGeneralResponses = new ArrayList<>();
+        this.loginResponses = new HashMap<>();
+        this.seqNumber = 1;
+        this.postWts = 0;
+        this.postGeneralWts = 0;
+        this.readRid = 0;
+        this.readGeneralRid = 0;
 
         while (true) {
 
@@ -88,7 +101,6 @@ public class Client {
             String numberOfAnnouncements;
             byte[] signature;
             Acknowledge response;
-            ArrayList<ReadView> readResponsesGeneral = new ArrayList<>();
             int seconds;
 
             try {
@@ -96,20 +108,7 @@ public class Client {
                 switch (tokens[0]) {
                     case "login":
 
-                        for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
-                            response = entry.getValue().login(this.clientPublicKey);
-                            if (AsymmetricCrypto.validateDigitalSignature(response.getSignature(), entry.getKey(), response.getMessage())) {
-                                String[] responses = response.getMessage().split("|");
-                                if(responses.length >= 3){
-                                    if (Integer.parseInt(responses[0]) > this.postWts){
-                                        this.postWts = Integer.parseInt(responses[0]);
-                                    }
-                                    if (Integer.parseInt(responses[2]) > this.postGeneralWts){
-                                        this.postGeneralWts = Integer.parseInt(responses[2]);
-                                    }
-                                }
-                            }
-                        }
+                        login();
 
                         break;
 
@@ -120,12 +119,6 @@ public class Client {
                         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
                             entry.getValue().register(this.clientPublicKey, this.clientNumber, signature);
                         }
-
-                        this.seqNumber = 1;
-                        this.postWts = 0;
-                        this.postGeneralWts = 0;
-                        this.readRid = 0;
-                        this.readGeneralRid = 0;
 
                         System.out.println("\nSuccessful registration.");
                         break;
@@ -179,6 +172,8 @@ public class Client {
 
                         System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
                         message += scanner.nextLine();
+
+                        login();
 
                         this.postGeneralWts++;
 
@@ -411,5 +406,79 @@ public class Client {
     public ArrayList<Acknowledge> getPostGeneralAcks() { return postGeneralAcks; }
     public ArrayList<ReadView> getReadResponses() { return readResponses; }
     public ArrayList<ReadView> getReadGeneralResponses() { return readGeneralResponses; }
+    public Map<PublicKey, String> getLoginResponses() { return loginResponses; }
+    protected void incrementMumberOfPostAcks(){ this.numberOfPostAcks++; }
+    protected void incrementNnumberOfPostGeneralAcks(){ this.numberOfPostGeneralAcks++; }
+    protected void incrementNnumberOfReadResponses(){ this.numberOfReadResponses++; }
+    protected void incrementNumberOfReadGeneralResponses(){ this.numberOfReadGeneralResponses++; }
+    protected void incrementNumberOfLoginResponses(){ this.numberOfLoginResponses++; }
 
+    private void login() throws InterruptedException {
+
+        this.numberOfLoginResponses = 0;
+        for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
+            AsyncLogin Login = new AsyncLogin(entry, this);
+            new Thread(Login).start();
+        }
+
+        int seconds = 0;
+        while (this.numberOfLoginResponses <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+
+            Thread.sleep(10);
+            seconds++;
+            if (seconds > 1000){
+                System.out.println("TIMEOUT: Wasn't able to finish postGeneral operation.");
+                break;
+            }
+
+        }
+
+        if (seconds < 1000){
+
+            Map<Integer, Integer> wtsCounts = new HashMap<>();
+            Map<Integer, Integer> wtsGeneralCounts = new HashMap<>();
+            Pair<Integer, Integer> resultWts = new Pair<>(this.postWts, 0);
+            Pair<Integer, Integer> resultWtsGeneral = new Pair<>(this.postGeneralWts, 0);
+
+            for(Map.Entry<PublicKey, String> entry : this.loginResponses.entrySet()){
+                String[] responses = entry.getValue().split("|");
+
+                if(responses.length >= 3){
+                    int newWts = Integer.parseInt(responses[0]);
+                    int newGeneralWts = Integer.parseInt(responses[2]);
+
+                    if (newWts > this.postWts) {
+                        if (wtsCounts.containsKey(newWts)) {
+                            wtsCounts.put(newWts, wtsCounts.get(newWts) + 1);
+                        } else {
+                            wtsCounts.put(newWts, 1);
+                        }
+                    }
+
+                    if (newGeneralWts > this.postGeneralWts) {
+                        if (wtsGeneralCounts.containsKey(newGeneralWts)) {
+                            wtsGeneralCounts.put(newGeneralWts, wtsGeneralCounts.get(newGeneralWts) + 1);
+                        } else {
+                            wtsGeneralCounts.put(newGeneralWts, 1);
+                        }
+                    }
+                }
+            }
+
+            for (Map.Entry<Integer, Integer> wtsCount : wtsCounts.entrySet()){
+                if (wtsCount.getKey() > resultWts.getValue0() && wtsCount.getValue() > resultWts.getValue1()){
+                    resultWts = new Pair<>(wtsCount.getKey(), wtsCount.getValue());
+                }
+            }
+            for (Map.Entry<Integer, Integer> wtsGeneralCount : wtsGeneralCounts.entrySet()){
+                if (wtsGeneralCount.getKey() > resultWtsGeneral.getValue0() && wtsGeneralCount.getValue() > resultWtsGeneral.getValue1()){
+                    resultWtsGeneral = new Pair<>(wtsGeneralCount.getKey(), wtsGeneralCount.getValue());
+                }
+            }
+
+            this.postWts = resultWts.getValue0();
+            this.postGeneralWts = resultWtsGeneral.getValue0();
+        }
+
+    }
 }

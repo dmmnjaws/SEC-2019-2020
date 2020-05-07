@@ -70,7 +70,7 @@ public class ClientLibrary implements Serializable {
 
     public Map<Integer, Announcement> getAnnouncements() { return this.announcements; }
 
-    public OneNAtomicRegister getOneNRegularRegister() { return this.oneNAtomicRegister; }
+    public OneNAtomicRegister getOneNAtomicRegister() { return this.oneNAtomicRegister; }
 
     public String write(int wts, String message, byte[] signature) throws NoSuchPaddingException,
             UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
