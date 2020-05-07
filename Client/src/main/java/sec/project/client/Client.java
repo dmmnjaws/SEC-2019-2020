@@ -135,6 +135,7 @@ public class Client {
                         this.postWts++;
 
                         this.postAcks = new HashMap<>();
+                        this.numberOfPostAcks = 0;
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postWts, this.clientPrivateKey);
 
@@ -144,7 +145,7 @@ public class Client {
                         }
 
                         seconds = 0;
-                        while (this.postAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        while (this.numberOfPostAcks <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
                             Thread.sleep(10);
                             seconds++;
@@ -175,6 +176,7 @@ public class Client {
                         this.postGeneralWts++;
 
                         this.postGeneralAcks = new HashMap<>();
+                        this.numberOfPostGeneralAcks = 0;
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postGeneralWts + this.clientNumber, this.clientPrivateKey);
 
@@ -184,7 +186,7 @@ public class Client {
                         }
 
                         seconds = 0;
-                        while (this.postGeneralAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        while (this.numberOfPostGeneralAcks <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
                             Thread.sleep(10);
                             seconds++;
@@ -218,6 +220,7 @@ public class Client {
                         this.readRid++;
 
                         this.readResponses = new HashMap<>();
+                        this.numberOfReadResponses = 0;
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString()
                                 + numberOfAnnouncements + this.readRid, this.clientPrivateKey);
@@ -228,7 +231,7 @@ public class Client {
                         }
 
                         seconds = 0;
-                        while (this.readResponses.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        while (this.numberOfReadResponses <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
                             Thread.sleep(10);
                             seconds++;
@@ -281,13 +284,16 @@ public class Client {
 
                             //writeback
 
+                            this.postAcks = new HashMap<>();
+                            this.numberOfPostAcks = 0;
+
                             for (Map.Entry<PublicKey, ClientAPI> entry : this.serverPublicKeys.entrySet()) {
                                 AsyncPost writeBack = new AsyncPost(entry, this, announcement.getValue0(), toReadClientPublicKey, announcement.getValue1(), announcement.getValue2());
                                 new Thread(writeBack).start();
                             }
 
                             seconds = 0;
-                            while (this.postAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                            while (this.numberOfPostAcks <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
                                 Thread.sleep(10);
                                 seconds++;
@@ -312,6 +318,7 @@ public class Client {
                         this.readGeneralRid++;
 
                         this.readGeneralResponses = new HashMap<>();
+                        this.numberOfReadGeneralResponses = 0;
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(numberOfAnnouncements + this.readGeneralRid, this.clientPrivateKey);
 
@@ -321,7 +328,7 @@ public class Client {
                         }
 
                         seconds = 0;
-                        while (this.readGeneralResponses.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        while (this.numberOfReadGeneralResponses <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
                             Thread.sleep(10);
                             seconds++;
