@@ -30,11 +30,9 @@ public class ServerInit {
             System.out.println("\nInsert the port number for this server.");
             String serverPort = System.console().readLine();
 
-
-
             ServerInit server = new ServerInit(Integer.parseInt(serverPort), portsArray);
 
-            while (true) {}
+            System.console().readLine();
 
         } catch (Exception e){
             e.printStackTrace();

@@ -28,6 +28,7 @@ public class NNRegularRegister implements Serializable {
     private Map<PublicKey, String> ackList;
     private int acks;
     private int nThreads;
+    private int byzantineWrite;
     private transient Object lock = new Object();
 
     public NNRegularRegister(GeneralBoard generalBoard){
@@ -37,6 +38,7 @@ public class NNRegularRegister implements Serializable {
         this.wts = 0;
         this.acks = 0;
         this.nThreads = 0;
+        this.byzantineWrite = 0;
 
         this.ackList = new HashMap<>();
     }
@@ -60,11 +62,7 @@ public class NNRegularRegister implements Serializable {
         if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,
                 value + wts + clientNumber) && wts > this.wts){
 
-            System.out.println(this.valueQuartet);
-            System.out.println("wts: " + wts);
-            System.out.println("client: " + clientNumber);
-
-            synchronized (lock) {
+            synchronized (this.lock) {
                 if (this.valueQuartet == null) {
 
                     this.valueQuartet = new Quartet<>(wts, value, clientNumber, signature);
@@ -100,11 +98,16 @@ public class NNRegularRegister implements Serializable {
                         new Thread(sendAck).start();
 
                     }
+                } else if (this.valueQuartet.getValue0() == wts && !this.valueQuartet.getValue1().equals(value)
+                        && Integer.parseInt(this.valueQuartet.getValue2()) == Integer.parseInt(clientNumber)){
+
+                    //Byzantine client write detected
+                    this.byzantineWrite++;
+                    return null;
 
                 } else if (this.valueQuartet.getValue0() == wts
                         && Integer.parseInt(this.valueQuartet.getValue2()) == Integer.parseInt(clientNumber)) {
-                    //System.out.println(stubs.containsKey(senderServerPublicKey));
-                    //System.out.println(!ackList.containsKey(senderServerPublicKey));
+
                     if (stubs.containsKey(senderServerPublicKey) && !ackList.containsKey(senderServerPublicKey)) {
                         this.ackList.put(senderServerPublicKey, "Ack");
                         this.acks++;
@@ -115,35 +118,48 @@ public class NNRegularRegister implements Serializable {
                 }
             }
 
-            while(this.acks <= (stubs.size() + 1 + ((stubs.size() + 1) / 3)) / 2){
-                Thread.sleep(500);
+            while(this.acks <= (stubs.size() + 1 + ((stubs.size() + 1) / 3)) / 2
+                    && this.byzantineWrite < (stubs.size() + 1) - (stubs.size() + 1 + ((stubs.size() + 1) / 3)) / 2){
+
+                Thread.sleep(250);
                 System.out.println("Waiting for acks "+ (((stubs.size() + 1 + ((stubs.size() + 1) / 3)) / 2) + 1) +"... currently -> " + this.acks);
+
             }
 
             System.out.println("Finishing an thread");
 
-            if(clientNumber.equals(this.valueQuartet.getValue2())){
-                this.generalBoard.addAnnouncement(this.valueQuartet);
-                this.wts = wts;
-                synchronized (this.lock){
+            synchronized (this.lock) {
+                if (this.byzantineWrite >= (stubs.size() + 1) - (stubs.size() + 1 + ((stubs.size() + 1) / 3)) / 2) {
                     this.nThreads--;
-                    if(this.nThreads == 0) {
+                    if (this.nThreads == 0) {
+                        this.ackList = new HashMap<>();
+                        this.acks = 0;
+                        this.byzantineWrite = 0;
+                        this.valueQuartet = null;
+                    }
+                    throw new Exception("Client " + clientNumber + " attempted byzantine write");
+                } else if (clientNumber.equals(this.valueQuartet.getValue2())) {
+                    this.generalBoard.addAnnouncement(this.valueQuartet);
+                    this.wts = wts;
+                    this.nThreads--;
+                    if (this.nThreads == 0) {
+                        this.ackList = new HashMap<>();
+                        this.acks = 0;
+                        this.byzantineWrite = 0;
+                        this.valueQuartet = null;
+                    }
+                    return "ACK";
+                } else {
+                    this.nThreads--;
+                    if (this.nThreads == 0) {
+                        this.byzantineWrite = 0;
                         this.ackList = new HashMap<>();
                         this.acks = 0;
                         this.valueQuartet = null;
                     }
+
+                    throw new Exception("Write from " + clientNumber + " was unsuccessful");
                 }
-                return "ACK";
-            } else {
-                synchronized (this.lock){
-                    this.nThreads--;
-                    if(this.nThreads == 0) {
-                        this.ackList = new HashMap<>();
-                        this.acks = 0;
-                        this.valueQuartet = null;
-                    }
-                }
-                throw new Exception("Write from " + clientNumber + " was unsuccessful");
             }
 
         }
