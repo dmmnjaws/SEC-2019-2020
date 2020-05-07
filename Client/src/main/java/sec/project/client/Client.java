@@ -148,8 +148,10 @@ public class Client {
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postWts, this.clientPrivateKey);
 
-                        AsyncPost post = new AsyncPost(this, message, signature);
-                        new Thread(post).start();
+                        for (Map.Entry<PublicKey, ClientAPI> entry : this.serverPublicKeys.entrySet()) {
+                            AsyncPost post = new AsyncPost(entry.getValue(), this, message, signature);
+                            new Thread(post).start();
+                        }
 
                         seconds = 0;
                         while (this.postAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
@@ -219,8 +221,10 @@ public class Client {
                         signature = AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString()
                                 + numberOfAnnouncements + this.readRid, this.clientPrivateKey);
 
-                        AsyncRead read = new AsyncRead(this, toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), signature);
-                        new Thread(read).start();
+                        for (Map.Entry<PublicKey, ClientAPI> entry : this.serverPublicKeys.entrySet()) {
+                            AsyncRead read = new AsyncRead(entry, this, toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), signature);
+                            new Thread(read).start();
+                        }
 
                         seconds = 0;
                         while (this.readResponses.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
@@ -276,8 +280,10 @@ public class Client {
 
                             //writeback
 
-                            AsyncPost writeBack = new AsyncPost(this, announcement.getValue0(), toReadClientPublicKey, announcement.getValue1(), announcement.getValue2());
-                            new Thread(writeBack).start();
+                            for (Map.Entry<PublicKey, ClientAPI> entry : this.serverPublicKeys.entrySet()) {
+                                AsyncPost writeBack = new AsyncPost(entry.getValue(), this, announcement.getValue0(), toReadClientPublicKey, announcement.getValue1(), announcement.getValue2());
+                                new Thread(writeBack).start();
+                            }
 
                             seconds = 0;
                             while (this.postAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
@@ -308,8 +314,10 @@ public class Client {
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(numberOfAnnouncements + this.readGeneralRid, this.clientPrivateKey);
 
-                        AsyncReadGeneral readGeneral = new AsyncReadGeneral(this, Integer.parseInt(numberOfAnnouncements), signature);
-                        new Thread(readGeneral).start();
+                        for (Map.Entry<PublicKey, ClientAPI> entry : this.serverPublicKeys.entrySet()) {
+                            AsyncReadGeneral readGeneral = new AsyncReadGeneral(entry,this, Integer.parseInt(numberOfAnnouncements), signature);
+                            new Thread(readGeneral).start();
+                        }
 
                         seconds = 0;
                         while (this.readGeneralResponses.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {

@@ -10,6 +10,7 @@ import java.util.Map;
 
 public class AsyncPost implements Runnable {
 
+    private ClientAPI stub;
     private Client client;
     private String message;
     private byte[] signature;
@@ -17,19 +18,21 @@ public class AsyncPost implements Runnable {
     private PublicKey toWriteClientPublicKey;
     private int writeBackWts;
 
-    public AsyncPost(Client client, String message, byte[] signature){
+    public AsyncPost(ClientAPI stub, Client client, String message, byte[] signature){
         this.message = message;
         this.signature = signature;
         this.client = client;
+        this.stub = stub;
         this.mode = "POST";
     }
 
-    public AsyncPost(Client client, int writeBackWts, PublicKey toWriteClientPublicKey, String message, byte[] signature) {
+    public AsyncPost(ClientAPI stub, Client client, int writeBackWts, PublicKey toWriteClientPublicKey, String message, byte[] signature) {
         this.message = message;
         this.signature = signature;
         this.client = client;
         this.writeBackWts = writeBackWts;
         this.toWriteClientPublicKey = toWriteClientPublicKey;
+        this.stub = stub;
         this.mode = "WRITEBACK";
     }
 
@@ -53,15 +56,13 @@ public class AsyncPost implements Runnable {
 
 
         try {
-            for (Map.Entry<PublicKey, ClientAPI> entry : this.client.getServerPublicKeys().entrySet()) {
 
-                Acknowledge acknowledge = entry.getValue().post(clientPublicKey, message, postWts, signature);
+            Acknowledge acknowledge = this.stub.post(clientPublicKey, message, postWts, signature);
 
-                if (acknowledge.getWts() == postWts) {
-                    this.client.getPostAcks().add(acknowledge);
-                }
-
+            if (acknowledge.getWts() == postWts) {
+                this.client.getPostAcks().add(acknowledge);
             }
+
         } catch (RemoteException e){
             e.printStackTrace();
         }

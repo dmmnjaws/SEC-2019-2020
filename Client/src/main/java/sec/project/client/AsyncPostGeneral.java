@@ -27,7 +27,7 @@ public class AsyncPostGeneral implements Runnable {
     public void run() {
 
         try {
-            Acknowledge acknowledge = stub.postGeneral(this.client.getClientPublicKey(), message, this.postGeneralWts, signature, null, null);
+            Acknowledge acknowledge = this.stub.postGeneral(this.client.getClientPublicKey(), message, this.postGeneralWts, signature, null, null);
 
             if (acknowledge.getWts() == this.postGeneralWts){
                 this.client.getPostGeneralAcks().add(acknowledge);

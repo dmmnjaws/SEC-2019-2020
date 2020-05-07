@@ -15,6 +15,7 @@ import java.util.Map;
 
 public class AsyncRead implements Runnable {
 
+    private Map.Entry<PublicKey, ClientAPI> stub;
     private Client client;
     private PublicKey toReadClientPublicKey;
     private int numberOfAnnouncements;
@@ -22,10 +23,11 @@ public class AsyncRead implements Runnable {
 
     //Runnable(this, toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), signature)
 
-    public AsyncRead(Client client, PublicKey toReadClientPublicKey, int numberOfAnnouncements, byte[] signature){
+    public AsyncRead(Map.Entry<PublicKey, ClientAPI> stub, Client client, PublicKey toReadClientPublicKey, int numberOfAnnouncements, byte[] signature){
         this.client = client;
         this.toReadClientPublicKey = toReadClientPublicKey;
         this.signature = signature;
+        this.stub = stub;
         this.numberOfAnnouncements = numberOfAnnouncements;
     }
 
@@ -34,31 +36,30 @@ public class AsyncRead implements Runnable {
         int rid = this.client.getReadRid();
 
         try {
-            for (Map.Entry<PublicKey, ClientAPI> entry : this.client.getServerPublicKeys().entrySet()) {
-                ReadView readResponse = entry.getValue().read(this.toReadClientPublicKey, this.numberOfAnnouncements,
-                        rid, this.signature, this.client.getClientPublicKey());
 
-                if (AsymmetricCrypto.validateDigitalSignature(readResponse.getSignature(), entry.getKey(),
-                        AsymmetricCrypto.transformTripletToString(readResponse.getAnnounces()) + readResponse.getRid())
-                        && rid == readResponse.getRid()) {
+            ReadView readResponse = this.stub.getValue().read(this.toReadClientPublicKey, this.numberOfAnnouncements,
+                    rid, this.signature, this.client.getClientPublicKey());
 
-                    boolean valid = true;
-                    for (Quartet<Integer, String, byte[], ArrayList<Integer>> announce : readResponse.getAnnounces()) {
-                        if (!(AsymmetricCrypto.validateDigitalSignature(announce.getValue2(), toReadClientPublicKey,
-                                announce.getValue1() + announce.getValue0()))) {
-                            valid = false;
-                        }
+            if (AsymmetricCrypto.validateDigitalSignature(readResponse.getSignature(), this.stub.getKey(),
+                    AsymmetricCrypto.transformTripletToString(readResponse.getAnnounces()) + readResponse.getRid())
+                    && rid == readResponse.getRid()) {
+
+                boolean valid = true;
+                for (Quartet<Integer, String, byte[], ArrayList<Integer>> announce : readResponse.getAnnounces()) {
+                    if (!(AsymmetricCrypto.validateDigitalSignature(announce.getValue2(), toReadClientPublicKey,
+                            announce.getValue1() + announce.getValue0()))) {
+                        valid = false;
                     }
-
-                    if (valid && readResponse.getAnnounces().size() != 0) {
-                        this.client.getReadResponses().add(readResponse);
-                    }
-
-                } else {
-                    System.out.println("\nInvalid Response from a server!");
                 }
 
+                if (valid && readResponse.getAnnounces().size() != 0) {
+                    this.client.getReadResponses().add(readResponse);
+                }
+
+            } else {
+                System.out.println("\nInvalid Response from a server!");
             }
+
         } catch (RemoteException e1){
             e1.printStackTrace();
         } catch (Exception e2){
