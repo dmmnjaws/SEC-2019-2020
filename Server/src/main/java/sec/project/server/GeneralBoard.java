@@ -4,6 +4,7 @@ package sec.project.server;
 import org.javatuples.Quartet;
 import org.javatuples.Quintet;
 import org.javatuples.Triplet;
+import sec.project.library.ClientAPI;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -12,6 +13,7 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,10 +69,13 @@ public class GeneralBoard implements Serializable {
 
     public Map<Integer, Announcement> getAnnouncements() { return this.announcements; }
 
-    public String write(int wts, String message, String clientNumber, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
-            UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+    public String write(int wts, String message, String clientNumber, byte[] signature, PublicKey clientPublicKey,
+                        byte[] senderServerSignature, PublicKey senderServerPublicKey, PrivateKey serverPrivateKey,
+                        PublicKey serverPublicKey, Map<PublicKey, ClientAPI> stubs) throws NoSuchPaddingException,
+            UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException, Exception {
 
-        return this.nNRegularRegister.write(wts, message, clientNumber, signature, clientPublicKey);
+        return this.nNRegularRegister.write(wts, message, clientNumber, signature, clientPublicKey,
+                senderServerSignature, senderServerPublicKey, serverPrivateKey, serverPublicKey, stubs);
     }
 
     public ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,

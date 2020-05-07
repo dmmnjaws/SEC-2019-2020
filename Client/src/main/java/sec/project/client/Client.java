@@ -184,8 +184,10 @@ public class Client {
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postGeneralWts + this.clientNumber, this.clientPrivateKey);
 
-                        AsyncPostGeneral postGeneral = new AsyncPostGeneral(this, message, signature);
-                        new Thread(postGeneral).start();
+                        for (Map.Entry<PublicKey, ClientAPI> entry : this.serverPublicKeys.entrySet()) {
+                            AsyncPostGeneral postGeneral = new AsyncPostGeneral(entry.getValue(),this, this.postGeneralWts, message, signature);
+                            new Thread(postGeneral).start();
+                        }
 
                         seconds = 0;
                         while (this.postGeneralAcks.size() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {

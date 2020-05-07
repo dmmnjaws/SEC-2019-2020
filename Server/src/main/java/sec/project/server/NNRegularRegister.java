@@ -4,6 +4,7 @@ import org.javatuples.Quartet;
 import org.javatuples.Quintet;
 import org.javatuples.Triplet;
 import sec.project.library.AsymmetricCrypto;
+import sec.project.library.ClientAPI;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -12,57 +13,137 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class NNRegularRegister implements Serializable {
-
-    //THIS IS STILL A (1,N) REGULAR REGISTER, IT MUST BE TRANSFORMER INTO A (N,N) REGULAR REGISTER
 
     private Quartet<Integer, String, String, byte[]> valueQuartet;
     private int wts;
     private int rid;
     private GeneralBoard generalBoard;
-    private ArrayList<String> ackList;
-    boolean iswriting = false;
-    int clientid;
+    private Map<PublicKey, String> ackList;
+    private int acks;
+    private int nThreads;
+    private transient Object lock = new Object();
 
     public NNRegularRegister(GeneralBoard generalBoard){
         this.generalBoard = generalBoard;
-        this.valueQuartet = new Quartet<>(0, null, null, null);
+        this.valueQuartet = null;
         this.rid = 0;
         this.wts = 0;
+        this.acks = 0;
+        this.nThreads = 0;
 
-        this.ackList = new ArrayList<>();
+        this.ackList = new HashMap<>();
     }
 
-    public String write(int wts, String value, String clientNumber, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
-            UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException,
-            InvalidKeyException {
-        //Substituir por maior
+    public String write(int wts, String value, String clientNumber, byte[] signature, PublicKey clientPublicKey,
+                        byte[] senderServerSignature, PublicKey senderServerPublicKey , PrivateKey serverPrivateKey,
+                        PublicKey serverPublicKey, Map<PublicKey, ClientAPI> stubs) throws NoSuchPaddingException,
+            UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException,
+            Exception {
+
+        if(this.lock == null){
+            this.lock = new Object();
+        }
+
+        if(senderServerPublicKey != null && senderServerSignature != null && !AsymmetricCrypto.validateDigitalSignature(senderServerSignature,
+                senderServerPublicKey, value + wts + clientNumber + new String(signature, "UTF-8"))){
+
+            return "Invalid server response";
+        }
+
         if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,
-                value + wts + clientNumber) && !this.generalBoard.getAnnouncements().containsKey(wts)){
+                value + wts + clientNumber) && wts > this.wts){
 
-            if(Integer.parseInt(ackList.get(0)) < 1/*client-id*/ && !ackList.isEmpty()){
-                //substitui tudo, ou seja volta a fazer
-            } else if(Integer.parseInt(ackList.get(0)) == wts){
-                ackList.add("ACK");
-            }
+            System.out.println(this.valueQuartet);
+            System.out.println("wts: " + wts);
+            System.out.println("client: " + clientNumber);
 
-            this.valueQuartet = new Quartet<>(wts, value, clientNumber, signature);
-            this.generalBoard.addAnnouncement(this.valueQuartet);
+            synchronized (lock) {
+                if (this.valueQuartet == null) {
 
-            while(ackList.size() < 69){
-                if(ackList.get(0) != "clientInicial"){
-                    //fecha a thread porque existe um cliente prioritario a tentar por
-                    //throw new Exception();
+                    this.valueQuartet = new Quartet<>(wts, value, clientNumber, signature);
+                    this.acks++;
+                    System.out.println("Client receive");
+                    byte[] sSSignature = AsymmetricCrypto.wrapDigitalSignature(value + wts + clientNumber + new String(signature, "UTF-8"), serverPrivateKey);
+
+                    for (Map.Entry<PublicKey, ClientAPI> entry : stubs.entrySet()) {
+
+                        AsyncSendAck sendAck = new AsyncSendAck(entry.getValue(), clientPublicKey, value, wts, signature,
+                                sSSignature, serverPublicKey);
+                        new Thread(sendAck).start();
+
+                    }
+
+                    this.nThreads++;
+
+                } else if (Integer.parseInt(this.valueQuartet.getValue2()) > Integer.parseInt(clientNumber)
+                        || this.valueQuartet.getValue0() < wts) {
+
+                    System.out.println("Switch write value");
+                    this.valueQuartet = new Quartet<>(wts, value, clientNumber, signature);
+                    this.ackList = new HashMap<>();
+                    this.acks = 1;
+                    this.nThreads++;
+
+                    byte[] sSSignature = AsymmetricCrypto.wrapDigitalSignature(value + wts + clientNumber + new String(signature, "UTF-8"), serverPrivateKey);
+
+                    for (Map.Entry<PublicKey, ClientAPI> entry : stubs.entrySet()) {
+
+                        AsyncSendAck sendAck = new AsyncSendAck(entry.getValue(), clientPublicKey, value, wts, signature,
+                                sSSignature, serverPublicKey);
+                        new Thread(sendAck).start();
+
+                    }
+
+                } else if (this.valueQuartet.getValue0() == wts
+                        && Integer.parseInt(this.valueQuartet.getValue2()) == Integer.parseInt(clientNumber)) {
+                    //System.out.println(stubs.containsKey(senderServerPublicKey));
+                    //System.out.println(!ackList.containsKey(senderServerPublicKey));
+                    if (stubs.containsKey(senderServerPublicKey) && !ackList.containsKey(senderServerPublicKey)) {
+                        this.ackList.put(senderServerPublicKey, "Ack");
+                        this.acks++;
+                        System.out.println("Receive ack");
+                        return null;
+                    }
+                    return null;
                 }
             }
 
-            ArrayList<String> ackList = new ArrayList<>();
+            while(this.acks <= (stubs.size() + 1 + ((stubs.size() + 1) / 3)) / 2){
+                Thread.sleep(500);
+                System.out.println("Waiting for acks "+ (((stubs.size() + 1 + ((stubs.size() + 1) / 3)) / 2) + 1) +"... currently -> " + this.acks);
+            }
 
-            if(wts > this.wts){
+            System.out.println("Finishing an thread");
+
+            if(clientNumber.equals(this.valueQuartet.getValue2())){
+                this.generalBoard.addAnnouncement(this.valueQuartet);
                 this.wts = wts;
+                synchronized (this.lock){
+                    this.nThreads--;
+                    if(this.nThreads == 0) {
+                        this.ackList = new HashMap<>();
+                        this.acks = 0;
+                        this.valueQuartet = null;
+                    }
+                }
+                return "ACK";
+            } else {
+                synchronized (this.lock){
+                    this.nThreads--;
+                    if(this.nThreads == 0) {
+                        this.ackList = new HashMap<>();
+                        this.acks = 0;
+                        this.valueQuartet = null;
+                    }
+                }
+                throw new Exception("Write from " + clientNumber + " was unsuccessful");
             }
 
         }

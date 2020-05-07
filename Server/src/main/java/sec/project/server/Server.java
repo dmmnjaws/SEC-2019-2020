@@ -7,6 +7,7 @@ import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
 import sec.project.library.ReadView;
+import sun.security.mscapi.CPublicKey;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -18,7 +19,7 @@ import java.util.*;
 
 public class Server implements ClientAPI {
 
-    private Map<String, ClientAPI> stubs;
+    private Map<PublicKey, ClientAPI> stubs;
     private int serverPort;
     private KeyStore serverKeyStore;
     private PrivateKey serverPrivateKey;
@@ -26,9 +27,8 @@ public class Server implements ClientAPI {
     private Map<PublicKey, ClientLibrary> clientList;
     private GeneralBoard generalBoard;
 
-    public Server (int serverPort, Map<String, ClientAPI> stubs){
+    public Server (int serverPort){
 
-        this.stubs = stubs;
         this.serverPort = serverPort;
 
         try {
@@ -83,6 +83,10 @@ public class Server implements ClientAPI {
 
         }
 
+    }
+
+    public void setStubs(Map<PublicKey, ClientAPI> stubs) {
+        this.stubs = stubs;
     }
 
     @Override
@@ -156,13 +160,16 @@ public class Server implements ClientAPI {
     }
 
     @Override
-    public Acknowledge postGeneral(PublicKey clientPublicKey, String message, int wts, byte[] signature) throws RemoteException {
+    public Acknowledge postGeneral(PublicKey clientPublicKey, String message, int wts, byte[] signature,
+                                   byte[] senderServerSignature, PublicKey senderServerPublicKey) throws RemoteException {
 
         try{
             System.out.println("\n-------------------------------------------------------------\n" +
                     "client" + clientList.get(clientPublicKey).getClientNumber() + " called postGeneral() method.");
 
-            String ack = this.generalBoard.write(wts, message, clientList.get(clientPublicKey).getClientNumber(), signature, clientPublicKey);
+            String ack = this.generalBoard.write(wts, message, clientList.get(clientPublicKey).getClientNumber(), signature, clientPublicKey,
+                    senderServerSignature, senderServerPublicKey, this.serverPrivateKey, this.serverPublicKey, this.stubs);
+
             saveState();
             return new Acknowledge(wts, ack, AsymmetricCrypto.wrapDigitalSignature(ack + wts, this.serverPrivateKey));
 
