@@ -2,6 +2,7 @@ package sec.project.server;
 
 import org.javatuples.Quartet;
 import org.javatuples.Triplet;
+import sec.project.library.ClientAPI;
 import sec.project.library.ReadView;
 
 import javax.crypto.BadPaddingException;
@@ -9,8 +10,10 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,13 +24,20 @@ public class ClientLibrary implements Serializable {
     private String clientNumber;
     private Map<Integer, Announcement> announcements;
     private OneNAtomicRegister oneNAtomicRegister;
+    private DoubleEchoBroadcaster doubleEchoBroadcaster;
     private PublicKey clientPublicKey;
+    private Map<PublicKey, ClientAPI> stubs;
+    private PublicKey serverPublicKey;
+    private PrivateKey serverPrivateKey;
 
-    public ClientLibrary(String clientNumber, PublicKey clientPublicKey){
+    public ClientLibrary(String clientNumber, PublicKey clientPublicKey, Map<PublicKey, ClientAPI> stubs, PublicKey serverPublicKey, PrivateKey serverPrivateKey){
         this.clientNumber = clientNumber;
         this.clientPublicKey = clientPublicKey;
         this.announcements = new HashMap<>();
         this.oneNAtomicRegister = new OneNAtomicRegister(this);
+        this.stubs = stubs;
+        this.serverPrivateKey = serverPrivateKey;
+        this.serverPublicKey = serverPublicKey;
     }
 
     public synchronized void addAnnouncement(Triplet<Integer, String, byte[]> triplet){
@@ -72,10 +82,16 @@ public class ClientLibrary implements Serializable {
 
     public OneNAtomicRegister getOneNAtomicRegister() { return this.oneNAtomicRegister; }
 
-    public String write(int wts, String message, byte[] signature) throws NoSuchPaddingException,
-            UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+    public DoubleEchoBroadcaster getDoubleEchoBroadcaster() { return this.doubleEchoBroadcaster; }
 
-        return this.oneNAtomicRegister.write(wts, message, signature);
+    public Map<PublicKey, ClientAPI> getStubs() { return this.stubs; }
+
+    public String write(int wts, String message, byte[] signature) throws NoSuchPaddingException,
+            UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException, RemoteException {
+
+
+        this.doubleEchoBroadcaster = new DoubleEchoBroadcaster(this);
+        return this.oneNAtomicRegister.write(wts, message, signature, this.serverPrivateKey, this.serverPublicKey);
     }
 
     public ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,

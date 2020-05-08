@@ -2,6 +2,7 @@ package sec.project.server;
 
 import org.javatuples.Quartet;
 import org.javatuples.Quintet;
+import org.javatuples.Triplet;
 import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
 import sec.project.library.ClientAPI;
@@ -93,7 +94,7 @@ public class Server implements ClientAPI {
             if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, clientNumber)
                     & this.clientList.get(clientPublicKey)==null) {
 
-                this.clientList.put(clientPublicKey, new ClientLibrary(clientNumber, clientPublicKey));
+                this.clientList.put(clientPublicKey, new ClientLibrary(clientNumber, clientPublicKey, this.stubs, this.serverPublicKey, this.serverPrivateKey));
                 System.out.println("\nRegistered client" + clientNumber + " with Public key: \n\n" + clientPublicKey);
 
             }else{
@@ -232,7 +233,7 @@ public class Server implements ClientAPI {
 
 
             ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> triplets = this.clientList.get(toReadClientPublicKey).read(number, rid, signature, clientPublicKey);
-            return new ReadView(triplets, rid, AsymmetricCrypto.wrapDigitalSignature(AsymmetricCrypto.transformTripletToString(triplets) + rid, this.serverPrivateKey));
+            return new ReadView(triplets, rid, AsymmetricCrypto.wrapDigitalSignature(AsymmetricCrypto.transformQuartetToString(triplets) + rid, this.serverPrivateKey));
 
             //if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, toReadClientPublicKey.toString() + number + seqNumber)
             //        & clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
@@ -283,7 +284,7 @@ public class Server implements ClientAPI {
                 "A client called the readGeneral() method.");
 
             ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> quartets = this.generalBoard.read(number, rid, signature, clientPublicKey);
-            return new ReadView(rid, AsymmetricCrypto.wrapDigitalSignature(AsymmetricCrypto.transformQuartetToString(quartets) + rid, this.serverPrivateKey), quartets);
+            return new ReadView(rid, AsymmetricCrypto.wrapDigitalSignature(AsymmetricCrypto.transformQuintetToString(quartets) + rid, this.serverPrivateKey), quartets);
 
             //if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,"" + number + seqNumber)
             //& clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
@@ -330,6 +331,24 @@ public class Server implements ClientAPI {
             throw new RemoteException("\nLogin error");
         }
 
+    }
+
+    @Override
+    public void echo(PublicKey clientPublicKey, Triplet<Integer, String, byte[]> message, byte[] signature, PublicKey serverPublicKey) throws RemoteException {
+        try{
+            this.clientList.get(clientPublicKey).getDoubleEchoBroadcaster().echo(clientPublicKey, message, signature, serverPublicKey);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void ready(PublicKey clientPublicKey, Triplet<Integer, String, byte[]> message, byte[] signature, PublicKey serverPublicKey) throws RemoteException {
+        try{
+            this.clientList.get(clientPublicKey).getDoubleEchoBroadcaster().ready(clientPublicKey, message, signature, serverPublicKey);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
 }

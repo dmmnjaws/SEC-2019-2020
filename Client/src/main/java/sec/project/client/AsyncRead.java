@@ -41,7 +41,7 @@ public class AsyncRead implements Runnable {
                     rid, this.signature, this.client.getClientPublicKey());
 
             if (AsymmetricCrypto.validateDigitalSignature(readResponse.getSignature(), this.stub.getKey(),
-                    AsymmetricCrypto.transformTripletToString(readResponse.getAnnounces()) + readResponse.getRid())
+                    AsymmetricCrypto.transformQuartetToString(readResponse.getAnnounces()) + readResponse.getRid())
                     && rid == readResponse.getRid()) {
 
                 boolean valid = true;

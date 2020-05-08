@@ -37,7 +37,7 @@ public class AsyncReadGeneral implements Runnable {
             ReadView readGeneralResponse = this.stub.getValue().readGeneral(numberOfAnnouncements, ridGeneral, signature, this.client.getClientPublicKey());
 
             if(AsymmetricCrypto.validateDigitalSignature(readGeneralResponse.getSignature(), this.stub.getKey(),
-                    AsymmetricCrypto.transformQuartetToString(readGeneralResponse.getAnnouncesGeneral()) + readGeneralResponse.getRid()) && ridGeneral == readGeneralResponse.getRid()){
+                    AsymmetricCrypto.transformQuintetToString(readGeneralResponse.getAnnouncesGeneral()) + readGeneralResponse.getRid()) && ridGeneral == readGeneralResponse.getRid()){
 
                 boolean valid = true;
                 for(Quintet<Integer, String, String, byte[], ArrayList<Integer>> announce : readGeneralResponse.getAnnouncesGeneral()){

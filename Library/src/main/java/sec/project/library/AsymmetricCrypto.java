@@ -108,24 +108,28 @@ public class AsymmetricCrypto {
         return certificate.getPublicKey();
     }
 
-    public static String transformTripletToString(ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> quartets) throws UnsupportedEncodingException {
+    public static String transformTripletToString(Triplet<Integer, String, byte[]> message) throws UnsupportedEncodingException {
+        return "" + message.getValue0() + message.getValue1() + new String(message.getValue2(), "UTF-8");
+    }
+
+    public static String transformQuartetToString(ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> quartets) throws UnsupportedEncodingException {
 
         String result = "";
 
-        for (Quartet<Integer, String, byte[], ArrayList<Integer>> triplet : quartets){
-            result += "" + triplet.getValue0() + triplet.getValue1() + new String(triplet.getValue2(), "UTF-8") + triplet.getValue3();
+        for (Quartet<Integer, String, byte[], ArrayList<Integer>> quartet : quartets){
+            result += "" + quartet.getValue0() + quartet.getValue1() + new String(quartet.getValue2(), "UTF-8") + quartet.getValue3();
 
         }
 
         return result;
     }
 
-    public static String transformQuartetToString(ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> quintets) throws UnsupportedEncodingException {
+    public static String transformQuintetToString(ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> quintets) throws UnsupportedEncodingException {
 
         String result = "";
 
-        for (Quintet<Integer, String, String, byte[], ArrayList<Integer>> quartet : quintets){
-            result += "" + quartet.getValue0() + quartet.getValue1() + quartet.getValue2() + new String(quartet.getValue3(), "UTF-8") + quartet.getValue4();
+        for (Quintet<Integer, String, String, byte[], ArrayList<Integer>> quintet : quintets){
+            result += "" + quintet.getValue0() + quintet.getValue1() + quintet.getValue2() + new String(quintet.getValue3(), "UTF-8") + quintet.getValue4();
 
         }
 
