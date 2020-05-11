@@ -8,6 +8,7 @@ import sec.project.library.ClientAPI;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
@@ -17,7 +18,7 @@ import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DoubleEchoBroadcaster {
+public class DoubleEchoBroadcaster implements Serializable {
 
     private PrivateKey serverPrivateKey;
 
