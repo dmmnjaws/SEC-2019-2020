@@ -18,6 +18,8 @@ import java.util.Scanner;
 public class ServerInit {
 
     private static Registry registry;
+    private static Map<PublicKey, ClientAPI> stubs;
+    private static Map<String, Registry> registryMap;
     private static ClientAPI stub;
     private static Server server;
 
@@ -46,15 +48,16 @@ public class ServerInit {
             this.server = new Server(server_port);
             this.stub = (ClientAPI) UnicastRemoteObject.exportObject(server, server_port);
             this.registry = LocateRegistry.createRegistry(server_port);
+            this.registryMap = new HashMap<>();
+            this.stubs = new HashMap<>();
             registry.rebind("localhost:" + String.valueOf(server_port) + "/ClientAPI", stub);
             System.err.println( "\nServer setting up. When all servers are at this stage press enter");
             System.console().readLine();
-            Map<PublicKey, ClientAPI> stubs = new HashMap<>();
             for (String serverPortString : portsArray) {
                 if (!serverPortString.equals(server_port)) {
-                    Registry registryAux = LocateRegistry.getRegistry(Integer.parseInt(serverPortString));
-                    stubs.put(AsymmetricCrypto.getPublicKeyFromCert("data/keys/server" + serverPortString + "_certificate.crt"),
-                            (ClientAPI) registryAux.lookup("localhost:" + serverPortString + "/ClientAPI"));
+                    this.registryMap.put(serverPortString, LocateRegistry.getRegistry(Integer.parseInt(serverPortString)));
+                    this.stubs.put(AsymmetricCrypto.getPublicKeyFromCert("data/keys/server" + serverPortString + "_certificate.crt"),
+                            (ClientAPI) this.registryMap.get(serverPortString).lookup("localhost:" + serverPortString + "/ClientAPI"));
                 }
             }
 

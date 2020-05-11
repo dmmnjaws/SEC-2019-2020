@@ -8,6 +8,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -31,12 +32,16 @@ public class OneNAtomicRegister implements Serializable {
 
     public String write(int wts, String value, byte[] signature, PrivateKey serverPrivateKey, PublicKey serverPublicKey) throws NoSuchPaddingException,
             UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException,
-            InvalidKeyException {
+            InvalidKeyException, RemoteException {
 
         if (AsymmetricCrypto.validateDigitalSignature(signature, this.clientLibrary.getClientPublicKey(),
                 value + wts) && !this.clientLibrary.getAnnouncements().containsKey(wts)){
 
             this.valueTriplet = new Triplet<>(wts, value, signature);
+
+            //comment this line to not use Double Echo Broadcast
+            this.valueTriplet = this.clientLibrary.getDoubleEchoBroadcaster().write(valueTriplet, serverPrivateKey, serverPublicKey);
+
             this.clientLibrary.addAnnouncement(this.valueTriplet);
             if (wts > this.wts){
                 this.wts = wts;

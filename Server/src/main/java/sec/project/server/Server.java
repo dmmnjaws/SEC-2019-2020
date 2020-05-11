@@ -14,7 +14,7 @@ import java.util.*;
 
 public class Server implements ClientAPI {
 
-    private Map<PublicKey, ClientAPI> stubs;
+    private static Map<PublicKey, ClientAPI> stubs;
     private int serverPort;
     private KeyStore serverKeyStore;
     private PrivateKey serverPrivateKey;
