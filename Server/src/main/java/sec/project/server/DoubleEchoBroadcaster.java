@@ -21,6 +21,7 @@ import java.util.Map;
 public class DoubleEchoBroadcaster implements Serializable {
 
     private PrivateKey serverPrivateKey;
+    private PublicKey serverPublicKey;
 
     private ClientLibrary clientLibrary;
     private boolean sentEcho;
@@ -41,6 +42,7 @@ public class DoubleEchoBroadcaster implements Serializable {
 
         System.out.println("DEBUG: Server received broadcast request. Args: " + AsymmetricCrypto.transformTripletToString(valueTriplet));
         this.serverPrivateKey = serverPrivateKey;
+        this.serverPublicKey = serverPublicKey;
         this.echoes = new HashMap<>();
         this.echoMessagesCount = new HashMap<>();
         this.readys = new HashMap<>();
@@ -50,15 +52,27 @@ public class DoubleEchoBroadcaster implements Serializable {
         this.delivered = false;
 
         if(!this.sentEcho){
+
+            System.out.println("DEBUG: Server initiated sending of ECHO messages.");
+
             this.sentEcho = true;
             for (Map.Entry<PublicKey, ClientAPI> stub : this.clientLibrary.getStubs().entrySet()){
-                stub.getValue().echo(this.clientLibrary.getClientPublicKey(), valueTriplet, AsymmetricCrypto.wrapDigitalSignature(
-                        this.clientLibrary.getClientPublicKey() + AsymmetricCrypto.transformTripletToString(valueTriplet), this.serverPrivateKey), serverPublicKey);
+                AsyncSendEcho asyncSendEcho = new AsyncSendEcho(stub, this.clientLibrary.getClientPublicKey(), valueTriplet, AsymmetricCrypto.wrapDigitalSignature(
+                        this.clientLibrary.getClientPublicKey() + AsymmetricCrypto.transformTripletToString(valueTriplet), this.serverPrivateKey), this.serverPublicKey, false);
+                new Thread(asyncSendEcho).start();
             }
 
         }
 
-        while(!delivered){ }
+        while(!this.delivered){
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println("DEBUG: Server checking for delivered: " + this.delivered);
+        }
 
         System.out.println("DEBUG: Server completed READY phase." );
         System.out.println("DEBUG: Server completed broadcast request.");
@@ -89,20 +103,27 @@ public class DoubleEchoBroadcaster implements Serializable {
             System.out.println("DEBUG: State of the server's ECHO message count: " + this.echoMessagesCount);
 
             if(this.echoMessagesCount.get(rawMessage) > (this.clientLibrary.getStubs().size() + (this.clientLibrary.getStubs().size() / 3)) / 2 && this.sentReady == false){
+
+                System.out.println("DEBUG: Server initiated sending of READY messages.");
+
                 this.sentReady = true;
                 this.echoedMessage = message;
                 for (Map.Entry<PublicKey, ClientAPI> stub : this.clientLibrary.getStubs().entrySet()){
-                    stub.getValue().ready(this.clientLibrary.getClientPublicKey(), message, AsymmetricCrypto.wrapDigitalSignature(
-                            this.clientLibrary.getClientPublicKey() + AsymmetricCrypto.transformTripletToString(message), this.serverPrivateKey), serverPublicKey);
 
-                    System.out.println("DEBUG: Server sent READY from ECHO. Args: " + this.clientLibrary.getClientPublicKey() + " / " + AsymmetricCrypto.transformTripletToString(message));
+                    System.out.println("DEBUG: Server will send a READY message from ECHO...");
+
+                    AsyncSendEcho asyncSendEcho = new AsyncSendEcho(stub, this.clientLibrary.getClientPublicKey(), message, AsymmetricCrypto.wrapDigitalSignature(
+                            this.clientLibrary.getClientPublicKey() + AsymmetricCrypto.transformTripletToString(message), this.serverPrivateKey), this.serverPublicKey, true);
+                    new Thread(asyncSendEcho).start();
+
+                    System.out.println("DEBUG: Server sent READY from ECHO. Args: " + AsymmetricCrypto.transformTripletToString(message));
                 }
             }
         }
     }
 
     public synchronized void ready(PublicKey clientPublicKey, Triplet<Integer, String, byte[]> message, byte[] signature, PublicKey serverPublicKey) throws UnsupportedEncodingException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, RemoteException {
-        System.out.println("DEBUG: Server received READY. Args: " + clientPublicKey + " / " + AsymmetricCrypto.transformTripletToString(message));
+        System.out.println("DEBUG: Server received READY. Args: " + AsymmetricCrypto.transformTripletToString(message));
 
         if (this.clientLibrary.getStubs().containsKey(serverPublicKey) && AsymmetricCrypto.validateDigitalSignature(signature, serverPublicKey,
                 clientPublicKey + AsymmetricCrypto.transformTripletToString(message)) && this.readys.get(serverPublicKey) == null) {
@@ -122,17 +143,24 @@ public class DoubleEchoBroadcaster implements Serializable {
             System.out.println("DEBUG: State of the server's READY message count: " + this.readyMessagesCount);
 
             if(this.readyMessagesCount.get(rawMessage) > 2 * (this.clientLibrary.getStubs().size() / 3) && this.delivered == false){
+
+                System.out.println("DEBUG: Server is ready to deliver. " + this.readyMessagesCount);
+
                 this.readyedMessage = message;
                 this.delivered = true;
                 return;
             }
 
             if(this.readyMessagesCount.get(rawMessage) > (this.clientLibrary.getStubs().size() / 3) && this.sentReady == false){
+
+                System.out.println("DEBUG: Server initiated amplification step");
+
                 this.sentReady = true;
                 this.readyedMessage = message;
                 for (Map.Entry<PublicKey, ClientAPI> stub : this.clientLibrary.getStubs().entrySet()){
-                    stub.getValue().ready(this.clientLibrary.getClientPublicKey(), message, AsymmetricCrypto.wrapDigitalSignature(
-                            this.clientLibrary.getClientPublicKey() + AsymmetricCrypto.transformTripletToString(message), this.serverPrivateKey), serverPublicKey);
+                    AsyncSendEcho asyncSendEcho = new AsyncSendEcho(stub, this.clientLibrary.getClientPublicKey(), message, AsymmetricCrypto.wrapDigitalSignature(
+                            this.clientLibrary.getClientPublicKey() + AsymmetricCrypto.transformTripletToString(message), this.serverPrivateKey), this.serverPublicKey, true);
+                    new Thread(asyncSendEcho).start();
                 }
 
             }
