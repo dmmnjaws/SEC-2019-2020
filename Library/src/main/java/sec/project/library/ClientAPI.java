@@ -19,4 +19,5 @@ public interface ClientAPI extends Remote {
     Acknowledge login(PublicKey receiverPublicKey) throws RemoteException;
     void echo(PublicKey clientPublicKey, Triplet<Integer, String, byte[]> message, byte[] signature, PublicKey serverPublicKey) throws RemoteException;
     void ready(PublicKey clientPublicKey, Triplet<Integer, String, byte[]> message, byte[] signature, PublicKey serverPublicKey) throws RemoteException;
+    void addCommitRequest(PublicKey clientPublicKey, Quartet<Integer, String, String , byte[]> valueQuartet, byte[] sSSignature, PublicKey serverPublicKey) throws RemoteException;
 }

@@ -351,4 +351,13 @@ public class Server implements ClientAPI {
         }
     }
 
+    @Override
+    public void addCommitRequest(PublicKey clientPublicKey, Quartet<Integer, String, String, byte[]> valueQuartet, byte[] sSSignature, PublicKey serverPublicKey) throws RemoteException{
+        try{
+            this.generalBoard.getnNRegularRegister().addCommitRequest(clientPublicKey, valueQuartet, sSSignature, serverPublicKey);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
 }
