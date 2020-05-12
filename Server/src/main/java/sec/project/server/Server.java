@@ -21,10 +21,12 @@ public class Server implements ClientAPI {
     private PublicKey serverPublicKey;
     private Map<PublicKey, ClientLibrary> clientList;
     private GeneralBoard generalBoard;
+    private boolean isBeingSaved;
 
     public Server (int serverPort){
 
         this.serverPort = serverPort;
+        this.isBeingSaved = false;
 
         try {
 
@@ -42,7 +44,9 @@ public class Server implements ClientAPI {
 
     }
 
-    public void saveState() throws IOException {
+    public synchronized void saveState() throws IOException {
+
+        this.isBeingSaved = true;
 
         State state = new State(this.clientList, this.generalBoard);
         FileOutputStream f = new FileOutputStream(new File("data/state" + this.serverPort + ".txt"));
@@ -52,6 +56,9 @@ public class Server implements ClientAPI {
 
         o.close();
         f.close();
+
+        this.isBeingSaved = false;
+
     }
 
     public void loadState() throws IOException, ClassNotFoundException {
@@ -130,23 +137,6 @@ public class Server implements ClientAPI {
             saveState();
             return new Acknowledge(wts, ack, AsymmetricCrypto.wrapDigitalSignature(ack + wts, this.serverPrivateKey));
 
-            //if (AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, message + seqNumber)
-            //        & clientList.get(clientPublicKey).getSeqNumber() == seqNumber) {
-
-            //    System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
-            //    System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
-            //    this.clientList.get(clientPublicKey).addAnnouncement(message);
-            //    this.clientList.get(clientPublicKey).incrementSeqNumber();
-            //    saveState();
-            //    System.out.println("\nDEBUG: incremented sequence number:\n" + this.clientList.get(clientPublicKey).getSeqNumber());
-
-            //} else {
-
-            //    System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
-            //    System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
-            //    System.out.println("\nDEBUG: boolean - equal seqNumbers?\n" + (clientList.get(clientPublicKey).getSeqNumber() == seqNumber));
-            //    throw new Exception("\nInvalid signature.");
-
         } catch (RemoteException e) {
             throw new RemoteException(e.getMessage());
 
@@ -181,25 +171,6 @@ public class Server implements ClientAPI {
 
             saveState();
             return new Acknowledge(wts, ack, AsymmetricCrypto.wrapDigitalSignature(ack + wts, this.serverPrivateKey));
-
-            //if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, message + seqNumber)
-            //        & clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
-
-            //    System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
-            //    System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
-            //    this.generalBoard.addAnnouncement(clientList.get(clientPublicKey).getClientNumber(), message);
-            //    this.clientList.get(clientPublicKey).incrementSeqNumber();
-            //    saveState();
-            //    System.out.println("\nDEBUG: incremented sequence number:\n" + this.clientList.get(clientPublicKey).getSeqNumber());
-
-            //}else{
-
-            //    System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
-            //    System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
-            //    System.out.println("\nDEBUG: boolean - equal seqNumbers?\n" + (clientList.get(clientPublicKey).getSeqNumber() == seqNumber));
-            //    throw new Exception("\nInvalid signature.");
-
-            //}
 
         } catch (RemoteException e) {
             throw new RemoteException(e.getMessage());
@@ -238,26 +209,6 @@ public class Server implements ClientAPI {
             ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> triplets = this.clientList.get(toReadClientPublicKey).read(number, rid, signature, clientPublicKey);
             return new ReadView(triplets, rid, AsymmetricCrypto.wrapDigitalSignature(AsymmetricCrypto.transformQuartetToString(triplets) + rid, this.serverPrivateKey));
 
-            //if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, toReadClientPublicKey.toString() + number + seqNumber)
-            //        & clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
-
-            //    System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
-            //    System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
-            //    String message = clientList.get(toReadClientPublicKey).getAnnouncements(number);
-            //    this.clientList.get(clientPublicKey).incrementSeqNumber();
-            //    System.out.println("\nDEBUG: incremented sequence number:\n" + this.clientList.get(clientPublicKey).getSeqNumber());
-
-            //    saveState();
-            //    return new Acknowledge(message, AsymmetricCrypto.wrapDigitalSignature(message, this.serverPrivateKey));
-
-            //}else{
-            //    System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
-            //    System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
-            //    System.out.println("\nDEBUG: boolean - equal seqNumbers?\n" + (clientList.get(clientPublicKey).getSeqNumber() == seqNumber));
-            //    throw new Exception("\nInvalid signature.");
-
-            //}
-
         } catch (RemoteException e) {
             throw new RemoteException(e.getMessage());
 
@@ -288,26 +239,6 @@ public class Server implements ClientAPI {
 
             ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> quartets = this.generalBoard.read(number, rid, signature, clientPublicKey);
             return new ReadView(rid, AsymmetricCrypto.wrapDigitalSignature(AsymmetricCrypto.transformQuintetToString(quartets) + rid, this.serverPrivateKey), quartets);
-
-            //if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey,"" + number + seqNumber)
-            //& clientList.get(clientPublicKey).getSeqNumber() == seqNumber){
-
-            //    System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
-            //    System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
-            //    String message = generalBoard.getAnnouncements(number);
-            //    this.clientList.get(clientPublicKey).incrementSeqNumber();
-            //    System.out.println("\nDEBUG: incremented sequence number:\n" + this.clientList.get(clientPublicKey).getSeqNumber());
-
-            //    saveState();
-            //    return new Acknowledge(message, AsymmetricCrypto.wrapDigitalSignature(message, this.serverPrivateKey));
-
-            //}else{
-            //    System.out.println("\nDEBUG: seqNumber in client:\n" + (seqNumber));
-            //    System.out.println("\nDEBUG: seqNumber in server:\n" + (clientList.get(clientPublicKey).getSeqNumber()));
-            //    System.out.println("\nDEBUG: boolean - equal seqNumbers?\n" + (clientList.get(clientPublicKey).getSeqNumber() == seqNumber));
-            //    throw new Exception("\nInvalid signature.");
-
-            //}
 
         } catch (RemoteException e) {
             throw new RemoteException(e.getMessage());
@@ -362,5 +293,7 @@ public class Server implements ClientAPI {
             e.printStackTrace();
         }
     }
+
+    protected boolean isBeingSaved(){ return this.isBeingSaved; }
 
 }

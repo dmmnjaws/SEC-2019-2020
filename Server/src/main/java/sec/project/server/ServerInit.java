@@ -32,9 +32,17 @@ public class ServerInit {
             System.out.println("\nInsert the port number for this server.");
             String serverPort = System.console().readLine();
 
-            ServerInit server = new ServerInit(Integer.parseInt(serverPort), portsArray);
+            ServerInit serverInit = new ServerInit(Integer.parseInt(serverPort), portsArray);
 
-            System.console().readLine();
+            while(true){
+                System.console().readLine();
+                if(server.isBeingSaved()){
+                    System.out.println("WARNING: The server is currently saving state, try again in a moment.");
+                } else {
+                    break;
+                }
+            }
+
 
         } catch (Exception e){
             e.printStackTrace();
