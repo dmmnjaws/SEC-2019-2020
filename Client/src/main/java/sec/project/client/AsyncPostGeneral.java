@@ -9,12 +9,16 @@ import java.util.Map;
 
 public class AsyncPostGeneral implements Runnable {
 
+    private Map.Entry<PublicKey, ClientAPI> stub;
     private Client client;
+    private int postGeneralWts;
     private String message;
     private byte[] signature;
 
-    public AsyncPostGeneral(Client client, String message, byte[] signature){
+    public AsyncPostGeneral(Map.Entry<PublicKey, ClientAPI> stub, Client client, int postGeneralWts, String message, byte[] signature){
+        this.stub = stub;
         this.client = client;
+        this.postGeneralWts = postGeneralWts;
         this.message = message;
         this.signature = signature;
     }
@@ -22,23 +26,22 @@ public class AsyncPostGeneral implements Runnable {
     @Override
     public void run() {
 
-        int postGeneralWts = this.client.getPostGeneralWts();
-
         try {
-            for (Map.Entry<PublicKey, ClientAPI> entry : this.client.getServerPublicKeys().entrySet()) {
+            Acknowledge acknowledge = this.stub.getValue().postGeneral(this.client.getClientPublicKey(), message, this.postGeneralWts, signature, null, null);
 
-                Acknowledge acknowledge = entry.getValue().postGeneral(this.client.getClientPublicKey(), message, postGeneralWts, signature);
-
-                if (acknowledge.getWts() == postGeneralWts){
-                    client.getPostGeneralAcks().add(acknowledge);
-                }
-
+            if (acknowledge.getWts() == this.postGeneralWts){
+                this.client.getPostGeneralAcks().put(this.stub.getKey(), acknowledge);
+                this.client.incrementNumberOfPostGeneralAcks();
             }
 
-        } catch (RemoteException e){
-            e.printStackTrace();
-        }
+        } catch (RemoteException e1) {
+            System.out.println("\n" + e1.getMessage());
+            this.client.getPostGeneralAcks().put(this.stub.getKey(), null);
+            this.client.incrementNumberOfPostGeneralAcks();
+            this.client.setException(true);
+            return;
 
+        }
     }
 
 }

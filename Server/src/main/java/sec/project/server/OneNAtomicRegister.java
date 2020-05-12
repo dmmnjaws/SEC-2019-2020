@@ -2,22 +2,20 @@ package sec.project.server;
 
 import org.javatuples.Quartet;
 import org.javatuples.Triplet;
-import sec.project.library.Acknowledge;
 import sec.project.library.AsymmetricCrypto;
-
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 
 public class OneNAtomicRegister implements Serializable {
-
-    //THIS IS STILL A (1,N) REGULAR REGISTER, IT MUST BE TRANSFORMER INTO A (1,N) ATOMIC REGISTER
 
     private Triplet <Integer, String, byte[]> valueTriplet;
     private int wts;
@@ -32,23 +30,34 @@ public class OneNAtomicRegister implements Serializable {
         this.wts = 0;
     }
 
-    public String write(int wts, String value, byte[] signature) throws NoSuchPaddingException,
+    public String write(int wts, String value, byte[] signature, PrivateKey serverPrivateKey, PublicKey serverPublicKey) throws NoSuchPaddingException,
             UnsupportedEncodingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException,
-            InvalidKeyException {
+            InvalidKeyException, RemoteException, InterruptedException {
 
-        if (AsymmetricCrypto.validateDigitalSignature(signature, this.clientLibrary.getClientPublicKey(),
-                value + wts) && !this.clientLibrary.getAnnouncements().containsKey(wts)){
+        String result = "BADSIGNATURE";
+        if (AsymmetricCrypto.validateDigitalSignature(signature, this.clientLibrary.getClientPublicKey(), value + wts)) {
 
-            this.valueTriplet = new Triplet<>(wts, value, signature);
-            this.clientLibrary.addAnnouncement(this.valueTriplet);
-            if (wts > this.wts){
-                this.wts = wts;
+            result = "IGNORED";
+
+            if (!this.clientLibrary.getAnnouncements().containsKey(wts)) {
+
+                result = "BADBROADCAST";
+
+                Triplet<Integer, String, byte[]> auxTriplet = new Triplet<>(wts, value, signature);
+                this.valueTriplet = this.clientLibrary.getDoubleEchoBroadcaster().write(auxTriplet, serverPrivateKey, serverPublicKey);
+
+                if (this.valueTriplet.getValue1() != null && this.valueTriplet.getValue2() != null) {
+                    this.clientLibrary.addAnnouncement(this.valueTriplet);
+                    if (wts > this.wts) {
+                        this.wts = wts;
+                    }
+                    return "ACK";
+                }
             }
-            return "ACK";
         }
 
-        //merely representative, the method never returns this.
-        return "FAIL";
+        //only returns this in case the Authenticated Double Echo Broadcast doesn't work.
+        return result;
     }
 
     public ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> read(int number, int rid, byte[] signature, PublicKey clientPublicKey) throws NoSuchPaddingException,
