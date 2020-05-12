@@ -60,6 +60,7 @@ public class NNRegularRegister implements Serializable {
         if(this.lock == null){
             this.lock = new Object();
         }
+
         if(this.expectedResponses == null || this.expectedResponses.isEmpty()){
             this.expectedResponses = stubs.keySet();
         }

@@ -11,6 +11,7 @@ import sec.project.library.ReadView;
 import java.io.*;
 import java.security.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Client {
 
@@ -27,16 +28,17 @@ public class Client {
     private int postGeneralWts;
     private int readRid;
     private int readGeneralRid;
+    private AtomicInteger numberOfRegistersFinished;
     private Map<PublicKey, Acknowledge> postAcks;
-    private int numberOfPostAcks;
+    private AtomicInteger numberOfPostAcks;
     private Map<PublicKey, Acknowledge> postGeneralAcks;
-    private int numberOfPostGeneralAcks;
+    private AtomicInteger numberOfPostGeneralAcks;
     private Map<PublicKey, ReadView> readResponses;
-    private int numberOfReadResponses;
+    private AtomicInteger numberOfReadResponses;
     private Map<PublicKey, ReadView> readGeneralResponses;
-    private int numberOfReadGeneralResponses;
+    private AtomicInteger numberOfReadGeneralResponses;
     private Map<PublicKey, String> loginResponses;
-    private int numberOfLoginResponses;
+    private AtomicInteger numberOfLoginResponses;
     private boolean exception;
 
     public Client (Map<Integer, ClientAPI> stubs) {
@@ -84,6 +86,12 @@ public class Client {
         this.readResponses = new HashMap<>();
         this.readGeneralResponses = new HashMap<>();
         this.loginResponses = new HashMap<>();
+        this.numberOfRegistersFinished = new AtomicInteger();
+        this.numberOfLoginResponses = new AtomicInteger();
+        this.numberOfPostAcks = new AtomicInteger();
+        this.numberOfReadResponses = new AtomicInteger();
+        this.numberOfPostGeneralAcks = new AtomicInteger();
+        this.numberOfReadGeneralResponses = new AtomicInteger();
         this.seqNumber = 1;
         this.postWts = 0;
         this.postGeneralWts = 0;
@@ -113,10 +121,25 @@ public class Client {
 
                     case "register":
 
+                        this.numberOfRegistersFinished.set(0);
+
                         signature = AsymmetricCrypto.wrapDigitalSignature(this.clientNumber, this.clientPrivateKey);
 
                         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
-                            entry.getValue().register(this.clientPublicKey, this.clientNumber, signature);
+                            AsyncRegister post = new AsyncRegister(entry, this.clientPublicKey, this.clientNumber, signature, this);
+                            new Thread(post).start();
+                        }
+
+                        seconds = 0;
+                        while(this.numberOfRegistersFinished.get() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2){
+
+                            Thread.sleep(10);
+                            seconds++;
+                            if (seconds > 1000) {
+                                System.out.println("\nTIMEOUT: Wasn't able to finish register operation.");
+                                break;
+                            }
+
                         }
 
                         System.out.println("\nSuccessful registration.");
@@ -139,7 +162,7 @@ public class Client {
                         this.postWts++;
 
                         this.postAcks = new HashMap<>();
-                        this.numberOfPostAcks = 0;
+                        this.numberOfPostAcks.set(0);
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postWts, this.clientPrivateKey);
 
@@ -149,7 +172,7 @@ public class Client {
                         }
 
                         seconds = 0;
-                        while (this.numberOfPostAcks <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        while (this.numberOfPostAcks.get() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
                             Thread.sleep(10);
                             seconds++;
@@ -181,7 +204,7 @@ public class Client {
                         this.postGeneralWts++;
 
                         this.postGeneralAcks = new HashMap<>();
-                        this.numberOfPostGeneralAcks = 0;
+                        this.numberOfPostGeneralAcks.set(0);
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(message + this.postGeneralWts + this.clientNumber, this.clientPrivateKey);
 
@@ -191,7 +214,7 @@ public class Client {
                         }
 
                         seconds = 0;
-                        while (this.numberOfPostGeneralAcks <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        while (this.numberOfPostGeneralAcks.get() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
                             Thread.sleep(10);
                             seconds++;
@@ -226,7 +249,7 @@ public class Client {
                         this.readRid++;
 
                         this.readResponses = new HashMap<>();
-                        this.numberOfReadResponses = 0;
+                        this.numberOfReadResponses.set(0);
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(toReadClientPublicKey.toString()
                                 + numberOfAnnouncements + this.readRid, this.clientPrivateKey);
@@ -237,7 +260,7 @@ public class Client {
                         }
 
                         seconds = 0;
-                        while (this.numberOfReadResponses <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        while (this.numberOfReadResponses.get() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
                             Thread.sleep(10);
                             seconds++;
@@ -303,7 +326,7 @@ public class Client {
                             //writeback
 
                             this.postAcks = new HashMap<>();
-                            this.numberOfPostAcks = 0;
+                            this.numberOfPostAcks.set(0);
 
                             for (Map.Entry<PublicKey, ClientAPI> entry : this.serverPublicKeys.entrySet()) {
                                 AsyncPost writeBack = new AsyncPost(entry, this, announcement.getValue0(), toReadClientPublicKey, announcement.getValue1(), announcement.getValue2());
@@ -311,7 +334,7 @@ public class Client {
                             }
 
                             seconds = 0;
-                            while (this.numberOfPostAcks <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                            while (this.numberOfPostAcks.get() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
                                 Thread.sleep(10);
                                 seconds++;
@@ -338,7 +361,7 @@ public class Client {
                         this.readGeneralRid++;
 
                         this.readGeneralResponses = new HashMap<>();
-                        this.numberOfReadGeneralResponses = 0;
+                        this.numberOfReadGeneralResponses.set(0);
 
                         signature = AsymmetricCrypto.wrapDigitalSignature(numberOfAnnouncements + this.readGeneralRid, this.clientPrivateKey);
 
@@ -348,7 +371,7 @@ public class Client {
                         }
 
                         seconds = 0;
-                        while (this.numberOfReadGeneralResponses <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+                        while (this.numberOfReadGeneralResponses.get() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
                             Thread.sleep(10);
                             seconds++;
@@ -453,23 +476,24 @@ public class Client {
     public Map<PublicKey, ReadView> getReadResponses() { return readResponses; }
     public Map<PublicKey, ReadView> getReadGeneralResponses() { return readGeneralResponses; }
     public Map<PublicKey, String> getLoginResponses() { return loginResponses; }
-    protected void incrementNumberOfPostAcks(){ this.numberOfPostAcks++; }
-    protected void incrementNumberOfPostGeneralAcks(){ this.numberOfPostGeneralAcks++; }
-    protected void incrementNumberOfReadResponses(){ this.numberOfReadResponses++; }
-    protected void incrementNumberOfReadGeneralResponses(){ this.numberOfReadGeneralResponses++; }
-    protected void incrementNumberOfLoginResponses(){ this.numberOfLoginResponses++; }
+    protected void incrementNumberOfPostAcks(){ this.numberOfPostAcks.incrementAndGet(); }
+    protected void incrementNumberOfPostGeneralAcks(){ this.numberOfPostGeneralAcks.incrementAndGet(); }
+    protected void incrementNumberOfReadResponses(){ this.numberOfReadResponses.incrementAndGet(); }
+    protected void incrementNumberOfReadGeneralResponses(){ this.numberOfReadGeneralResponses.incrementAndGet(); }
+    protected void incrementNumberOfLoginResponses(){ this.numberOfLoginResponses.incrementAndGet(); }
+    protected void incrementNumberOfTRegistersFinished(){this.numberOfRegistersFinished.incrementAndGet(); }
     protected void setException(boolean exception){ this.exception = exception; }
 
     private void login() throws InterruptedException {
 
-        this.numberOfLoginResponses = 0;
+        this.numberOfLoginResponses.set(0);
         for (Map.Entry<PublicKey, ClientAPI> entry : serverPublicKeys.entrySet()) {
             AsyncLogin Login = new AsyncLogin(entry, this);
             new Thread(Login).start();
         }
 
         int seconds = 0;
-        while (this.numberOfLoginResponses <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
+        while (this.numberOfLoginResponses.get() <= (this.serverPublicKeys.size() + (this.serverPublicKeys.size() / 3)) / 2) {
 
             Thread.sleep(10);
             seconds++;

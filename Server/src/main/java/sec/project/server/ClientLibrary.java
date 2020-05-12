@@ -87,8 +87,7 @@ public class ClientLibrary implements Serializable {
     public Map<PublicKey, ClientAPI> getStubs() { return this.stubs; }
 
     public String write(int wts, String message, byte[] signature) throws NoSuchPaddingException,
-            UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException, RemoteException {
-
+            UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException, RemoteException, InterruptedException {
 
         this.doubleEchoBroadcaster = new DoubleEchoBroadcaster(this);
         return this.oneNAtomicRegister.write(wts, message, signature, this.serverPrivateKey, this.serverPublicKey);

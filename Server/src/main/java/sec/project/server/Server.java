@@ -106,9 +106,7 @@ public class Server implements ClientAPI {
             saveState();
 
         } catch (Exception e){
-            //TO DO -> restrict exception catching
-            e.printStackTrace();
-            throw new RemoteException();
+            throw new RemoteException("\nThe server registered in port " + this.serverPort + " reports that you are already registered.");
         }
     }
 
@@ -124,6 +122,11 @@ public class Server implements ClientAPI {
             }
 
             String ack = this.clientList.get(clientPublicKey).write(wts, message, signature);
+
+            if (ack.equals("BADSIGNATURE") || ack.equals("BADBROADCAST")){
+                throw new RemoteException("\nSomething went wrong in the server registered in port " + this.serverPort + "...");
+            }
+
             saveState();
             return new Acknowledge(wts, ack, AsymmetricCrypto.wrapDigitalSignature(ack + wts, this.serverPrivateKey));
 
@@ -204,7 +207,7 @@ public class Server implements ClientAPI {
         } catch (NullPointerException e) {
             e.printStackTrace();
             System.out.println("\nInvalid Request!");
-            throw new RemoteException("Invalid Request!");
+            throw new RemoteException("\nInvalid Request!");
 
         } catch (Exception e){
             //TO DO -> restrict exception catching

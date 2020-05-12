@@ -38,7 +38,7 @@ public class DoubleEchoBroadcaster implements Serializable {
         this.clientLibrary = clientLibrary;
     }
 
-    public Triplet<Integer, String, byte[]> write(Triplet <Integer, String, byte[]> valueTriplet, PrivateKey serverPrivateKey, PublicKey serverPublicKey) throws UnsupportedEncodingException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, RemoteException {
+    public Triplet<Integer, String, byte[]> write(Triplet <Integer, String, byte[]> valueTriplet, PrivateKey serverPrivateKey, PublicKey serverPublicKey) throws UnsupportedEncodingException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, RemoteException, InterruptedException {
 
         System.out.println("DEBUG: Server received broadcast request. Args: " + AsymmetricCrypto.transformTripletToString(valueTriplet));
         this.serverPrivateKey = serverPrivateKey;
@@ -64,11 +64,13 @@ public class DoubleEchoBroadcaster implements Serializable {
 
         }
 
+        int seconds = 0;
         while(!this.delivered){
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+
+            Thread.sleep(100);
+            seconds++;
+            if (seconds > 100) {
+                return null;
             }
 
             System.out.println("DEBUG: Server checking for delivered: " + this.delivered);
