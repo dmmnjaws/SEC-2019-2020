@@ -507,7 +507,6 @@ public class Client {
         if (seconds < 1000){
 
             Map<Integer, Integer> wtsCounts = new HashMap<>();
-            Map<Integer, Integer> wtsGeneralCounts = new HashMap<>();
             Pair<Integer, Integer> resultWts = new Pair<>(this.postWts, 0);
             Pair<Integer, Integer> resultWtsGeneral = new Pair<>(this.postGeneralWts, 0);
 
@@ -529,12 +528,8 @@ public class Client {
                             }
                         }
 
-                        if (newGeneralWts > this.postGeneralWts) {
-                            if (wtsGeneralCounts.containsKey(newGeneralWts)) {
-                                wtsGeneralCounts.put(newGeneralWts, wtsGeneralCounts.get(newGeneralWts) + 1);
-                            } else {
-                                wtsGeneralCounts.put(newGeneralWts, 1);
-                            }
+                        if (newGeneralWts > this.postGeneralWts ) {
+                            this.postGeneralWts = newGeneralWts;
                         }
                     }
                 }
@@ -545,14 +540,8 @@ public class Client {
                     resultWts = new Pair<>(wtsCount.getKey(), wtsCount.getValue());
                 }
             }
-            for (Map.Entry<Integer, Integer> wtsGeneralCount : wtsGeneralCounts.entrySet()){
-                if (wtsGeneralCount.getKey() > resultWtsGeneral.getValue0() && wtsGeneralCount.getValue() > resultWtsGeneral.getValue1()){
-                    resultWtsGeneral = new Pair<>(wtsGeneralCount.getKey(), wtsGeneralCount.getValue());
-                }
-            }
 
             this.postWts = resultWts.getValue0();
-            this.postGeneralWts = resultWtsGeneral.getValue0();
         }
 
     }

@@ -41,7 +41,7 @@ public class ClientLibrary implements Serializable {
     }
 
     public synchronized void addAnnouncement(Triplet<Integer, String, byte[]> triplet){
-        Announcement announcement = new Announcement(announcements.size() + 1, triplet, getAnnouncements());
+        Announcement announcement = new Announcement(triplet, getAnnouncements());
         this.announcements.put(triplet.getValue0(), announcement);
         System.out.println("\nOn client" + clientNumber + "'s board:"+ announcement.printAnnouncement());
     }

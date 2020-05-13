@@ -46,7 +46,7 @@ public class OneNAtomicRegister implements Serializable {
                 Triplet<Integer, String, byte[]> auxTriplet = new Triplet<>(wts, value, signature);
                 this.valueTriplet = this.clientLibrary.getDoubleEchoBroadcaster().write(auxTriplet, serverPrivateKey, serverPublicKey);
 
-                if (this.valueTriplet.getValue1() != null && this.valueTriplet.getValue2() != null) {
+                if (this.valueTriplet != null && this.valueTriplet.getValue1() != null && this.valueTriplet.getValue2() != null) {
                     this.clientLibrary.addAnnouncement(this.valueTriplet);
                     if (wts > this.wts) {
                         this.wts = wts;

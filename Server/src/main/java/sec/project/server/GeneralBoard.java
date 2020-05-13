@@ -31,7 +31,7 @@ public class GeneralBoard implements Serializable {
     }
 
     public synchronized void addAnnouncement(Quartet<Integer, String, String, byte[]> quartet){
-        Announcement announcement = new Announcement(announcements.size()+1, quartet, getAnnouncements());
+        Announcement announcement = new Announcement(quartet, getAnnouncements());
         this.announcements.put(quartet.getValue0(), announcement);
         System.out.println("\nOn the General Board:"+ announcement.printAnnouncement());
     }

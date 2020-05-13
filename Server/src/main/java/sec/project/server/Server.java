@@ -27,6 +27,7 @@ public class Server implements ClientAPI {
 
         this.serverPort = serverPort;
         this.isBeingSaved = false;
+        this.stubs = new HashMap<>();
 
         try {
 
@@ -44,33 +45,43 @@ public class Server implements ClientAPI {
 
     }
 
-    public synchronized void saveState() throws IOException {
+    public synchronized void saveState() {
 
-        this.isBeingSaved = true;
+        try{
 
-        State state = new State(this.clientList, this.generalBoard);
-        FileOutputStream f = new FileOutputStream(new File("data/state" + this.serverPort + ".txt"));
-        ObjectOutputStream o = new ObjectOutputStream(f);
+            this.isBeingSaved = true;
 
-        o.writeObject(state);
+            State state = new State(this.clientList, this.generalBoard);
 
-        o.close();
-        f.close();
+            FileOutputStream f = new FileOutputStream(new File("data/state" + this.serverPort + ".txt"));
+            ObjectOutputStream o = new ObjectOutputStream(f);
+            o.writeObject(state);
 
-        this.isBeingSaved = false;
+            o.close();
+            f.close();
+
+            FileOutputStream fBackup = new FileOutputStream(new File("data/state" + this.serverPort + "_backup.txt"));
+            ObjectOutputStream oBackup = new ObjectOutputStream(fBackup);
+            oBackup.writeObject(state);
+
+            oBackup.close();
+            fBackup.close();
+
+            this.isBeingSaved = false;
+
+        } catch (IOException e){
+            System.out.println("WARNING: There was an error while saving the server's state.");
+        }
+
 
     }
 
-    public void loadState() throws IOException, ClassNotFoundException {
+    public void loadState() throws ClassNotFoundException {
 
         File stateFile = new File("data/state" + this.serverPort + ".txt");
+        File stateFileBackup = new File("data/state" + this.serverPort + "_backup.txt");
 
-        if (!(stateFile.exists())) {
-
-            this.clientList = new Hashtable<>();
-            this.generalBoard = new GeneralBoard();
-
-        } else {
+        try{
 
             FileInputStream file = new FileInputStream(stateFile);
             ObjectInputStream objStream = new ObjectInputStream(file);
@@ -82,6 +93,29 @@ public class Server implements ClientAPI {
 
             this.clientList = state.getClientList();
             this.generalBoard = state.getGeneralBoard();
+            return;
+
+        } catch (IOException e1){
+
+            try {
+                FileInputStream file = new FileInputStream(stateFileBackup);
+                ObjectInputStream objStream = new ObjectInputStream(file);
+
+                State state = (State) objStream.readObject();
+
+                objStream.close();
+                file.close();
+
+                this.clientList = state.getClientList();
+                this.generalBoard = state.getGeneralBoard();
+                return;
+
+            } catch (IOException e2){
+
+                this.clientList = new Hashtable<>();
+                this.generalBoard = new GeneralBoard();
+
+            }
 
         }
 
@@ -131,7 +165,7 @@ public class Server implements ClientAPI {
             String ack = this.clientList.get(clientPublicKey).write(wts, message, signature);
 
             if (ack.equals("BADSIGNATURE") || ack.equals("BADBROADCAST")){
-                throw new RemoteException("\nSomething went wrong in the server registered in port " + this.serverPort + "...");
+                throw new RemoteException("\nSomething went wrong in the server registered in port " + this.serverPort + "... (" + ack + ")");
             }
 
             saveState();

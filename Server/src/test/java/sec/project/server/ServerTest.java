@@ -22,7 +22,7 @@ import java.util.Scanner;
 /**
  * Unit test for simple App.
  */
-public class AppTest 
+public class ServerTest
 {
     PublicKey clientPublicKey;
     PrivateKey clientPrivatekey;
@@ -31,7 +31,7 @@ public class AppTest
 
     @Before
     public void populateForTest() {
-        this.server = new Server(8000, 1);
+        this.server = new Server(8000);
         try {
             this.clientKeyStore = AsymmetricCrypto.getKeyStore("data/test/clienttest_keystore.jks", "clienttest");
             this.clientPrivatekey = AsymmetricCrypto.getPrivateKey(clientKeyStore, "clienttest", "clienttest");
@@ -97,7 +97,7 @@ public class AppTest
             e.printStackTrace();
         }
 
-        ack = server.postGeneral(this.clientPublicKey, testString, 1, testBytes);
+        ack = server.postGeneral(this.clientPublicKey, testString, 1, testBytes, null, null);
 
     }
 
@@ -128,7 +128,6 @@ public class AppTest
         readView = server.read(this.clientPublicKey,1,1, testBytes,this.clientPublicKey);
 
     }
-    @Ignore
     @Test(expected = RemoteException.class)
     public void readGeneralWithoutRegisterTest() throws RemoteException {
 
@@ -219,7 +218,7 @@ public class AppTest
             testBytes = AsymmetricCrypto.wrapDigitalSignature("1", this.clientPrivatekey);
             server.register(this.clientPublicKey, "1", testBytes);
             testBytes = AsymmetricCrypto.wrapDigitalSignature(testString + "1" + "1", this.clientPrivatekey);
-            ack = server.postGeneral(this.clientPublicKey, testString, 1, testBytes);
+            ack = server.postGeneral(this.clientPublicKey, testString, 1, testBytes, null, null);
             testBytes = AsymmetricCrypto.wrapDigitalSignature("1" + "1", this.clientPrivatekey);
             readView = server.readGeneral(1,1, testBytes,this.clientPublicKey);
             assertEquals(testString, readView.getAnnouncesGeneral().get(0).getValue1());
@@ -233,7 +232,9 @@ public class AppTest
 
     @After
     public void cleanState() {
-        File file = new File("data/state.txt");
+        File file = new File("data/state8000.txt");
+        file.delete();
+        file = new File("data/state8000_backup.txt");
         file.delete();
     }
 
