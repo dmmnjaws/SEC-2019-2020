@@ -39,7 +39,6 @@ public class GeneralBoard implements Serializable {
     public ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> getAnnouncementsQuartets(int number){
         ArrayList<Quintet<Integer, String, String, byte[], ArrayList<Integer>>> result = new ArrayList<>();
 
-        //this must be in the beginning of the method to avoid concurrent changes in the maxWts during this method.
         int maxWts = this.nNRegularRegister.getWts();
 
         int aux;

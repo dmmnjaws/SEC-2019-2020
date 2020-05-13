@@ -47,7 +47,6 @@ public class ClientLibrary implements Serializable {
     public ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> getAnnouncementsTriplets(int number){
         ArrayList<Quartet<Integer, String, byte[], ArrayList<Integer>>> result = new ArrayList<>();
 
-        //this must be in the beginning of the method to avoid concurrent changes in the maxWts during this method.
         int maxWts = this.oneNAtomicRegister.getWts();
 
         int aux;

@@ -79,7 +79,6 @@ public class NNRegularRegister implements Serializable {
 
                     this.valueQuartet = new Quartet<>(wts, value, clientNumber, signature);
                     this.acks++;
-                    System.out.println("Client receive");
                     byte[] sSSignature = AsymmetricCrypto.wrapDigitalSignature(value + wts + clientNumber + new String(signature, "UTF-8"), serverPrivateKey);
 
                     for (Map.Entry<PublicKey, ClientAPI> entry : stubs.entrySet()) {
@@ -220,8 +219,6 @@ public class NNRegularRegister implements Serializable {
                         + valueQuartet.getValue2() + new String(valueQuartet.getValue3(), "UTF-8"), serverPrivateKey);
 
                 for (Map.Entry<PublicKey, ClientAPI> entry : stubs.entrySet()) {
-
-                    System.out.println("\n\nDEBUG: " + entry.getValue());
 
                     AsyncReadyToCommit readyToCommit = new AsyncReadyToCommit(entry.getValue(), clientPublicKey, valueQuartet,
                             sSSignature, serverPublicKey);

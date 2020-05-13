@@ -292,7 +292,6 @@ public class Server implements ClientAPI {
 
         try {
             String message = "" + this.clientList.get(clientPublicKey).getOneNAtomicRegister().getWts() + "|" + this.generalBoard.getnNRegularRegister().getWts();
-            System.out.println("DEBUG: " + message);
             return new Acknowledge(message, AsymmetricCrypto.wrapDigitalSignature(message, this.serverPrivateKey));
 
         } catch (NullPointerException e) {

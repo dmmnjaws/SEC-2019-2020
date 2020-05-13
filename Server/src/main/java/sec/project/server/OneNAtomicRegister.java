@@ -56,7 +56,6 @@ public class OneNAtomicRegister implements Serializable {
             }
         }
 
-        //only returns this in case the Authenticated Double Echo Broadcast doesn't work.
         return result;
     }
 
