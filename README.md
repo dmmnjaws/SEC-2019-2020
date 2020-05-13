@@ -53,9 +53,9 @@ Extra:
 
 - if you want to have more clients you will need to generate new keys in Client/data/keys and paste the key's certificate, on the server's keys directory Server/data/keys. The commands to create the keys are the following:
     
-1    1 - gerar private key e certificado
+    1 - gerar private key e certificado
     
-    -> openssl req -newkey rsa:2048 -nodes -passout pass:clientXpassword -keyout clientX_private_key.key -x509 -days 365 -out            clientX_certificate.crt
+    -> openssl req -newkey rsa:2048 -nodes -passout pass:clientXpassword -keyout clientX_private_key.key -x509 -days 365 -out clientX_certificate.crt
 
     2 - converter private key e certificado para pkcs12
     
