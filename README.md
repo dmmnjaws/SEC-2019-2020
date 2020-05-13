@@ -28,13 +28,13 @@ How to execute our project (final version)
   
   -> mvn spring-boot:run
   
+  \\\ It will ask to insert all ports from the known servers
+  
+  -> X \\\ 8000,8001,8002...N
+  
   \\\ It will ask to insert the client id
  
   -> X \\\ Can be 1 or 2 if you want to add more you will need to create new keys
-
-  \\\ It will ask the server you want to connect
-
-  -> 1 \\\ In this case is only one possible choice
 
   \\\ Then you will need to insert the keystore and private key passwords
 
@@ -42,7 +42,7 @@ How to execute our project (final version)
 
   \\\ Then you can insert the application commands
   
-  -> register/post/read/postGeneral/readGeneral
+  -> register/post/read/postGeneral/readGeneral (and an extra command called login)
   
   \\\ Then follow the instructions to complete the commands
   
