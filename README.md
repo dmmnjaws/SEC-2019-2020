@@ -2,20 +2,28 @@
 Projeto de SEC
 
 
-How to execute our project (intermidiate version)
+How to execute our project (final version)
 
 1 - Open a terminal at project's base directory
   
   -> mvn clean install
-
-2 - Open a terminal for server in {basedir}/Server
   
+
+2 - Open a terminal N for server N in {basedir}/Server
+
   -> mvn spring-boot:run
   
-  \\\ It will ask to insert the server id
- 
-  -> 1 \\\ 1 is server id in this version is only one
-
+  \\\ It will ask to insert all other server ports
+  
+  -> 8000,8001,...,N
+  
+  \\\ It will then ask you to insert your server port
+  
+  -> 8XXX
+  
+  \\\ Then when all servers you want to start are at this stage press enter 
+  
+  
 3 - Open terminal(s) for clients in {basedir}/Client
   
   -> mvn spring-boot:run
@@ -37,6 +45,7 @@ How to execute our project (intermidiate version)
   -> register/post/read/postGeneral/readGeneral
   
   \\\ Then follow the instructions to complete the commands
+  
 
 Extra:
 
@@ -44,9 +53,9 @@ Extra:
 
 - if you want to have more clients you will need to generate new keys in Client/data/keys and paste the key's certificate, on the server's keys directory Server/data/keys. The commands to create the keys are the following:
     
-1    1 - gerar private key e certificado
+    1 - gerar private key e certificado
     
-    -> openssl req -newkey rsa:2048 -nodes -passout pass:clientXpassword -keyout clientX_private_key.key -x509 -days 365 -out            clientX_certificate.crt
+    -> openssl req -newkey rsa:2048 -nodes -passout pass:clientXpassword -keyout clientX_private_key.key -x509 -days 365 -out clientX_certificate.crt
 
     2 - converter private key e certificado para pkcs12
     
@@ -55,12 +64,3 @@ Extra:
     3 - generate keystore from pkcs12 file
     
     -> keytool -importkeystore -srckeystore clientX_pkcs12.p12 -srcstoretype pkcs12 -destkeystore clientX_keystore.jks -deststoretype JKS
-
--------------------------------------------------------------------------------------------------------------------------------
-DISCUSSÃO COM O PROFESSOR:
-
-// FEITO em vez de guardar o estado do cliente com o sequence number, pedir o sequence number ao servidor antes de se juntar.
-
-O que acontece se o servidor crasha no meio da escrita, ver isso.
-
-RELATÓRIO: esquecer a introdução, o indice e a API; emfase nos ataques que evitamos e como.
