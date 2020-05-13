@@ -15,7 +15,7 @@ How to execute our project (final version)
   
   \\\ It will ask to insert all other server ports
   
-  -> 8000,8001,...,N
+  -> 8000,8001,...,N (except the port of the server you're opening. So, except 8XXX, that you'll insert below.)
   
   \\\ It will then ask you to insert your server port
   
