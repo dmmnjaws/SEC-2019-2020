@@ -234,9 +234,9 @@ public class NNRegularRegister implements Serializable {
             }
 
             while(this.commits <= (stubs.size() + 1 + ((stubs.size() + 1) / 3)) / 2
-                    && this.aborts < (stubs.size() + 1) - (stubs.size() + 1 + ((stubs.size() + 1) / 3)) / 2){}
+                    && this.aborts <= (stubs.size() + 1) - (stubs.size() + 1 + ((stubs.size() + 1) / 3)) / 2){}
 
-            if (this.aborts < (stubs.size() + 1) - (stubs.size() + 1 + ((stubs.size() + 1) / 3)) / 2){
+            if (this.aborts > (stubs.size() + 1) - (stubs.size() + 1 + ((stubs.size() + 1) / 3)) / 2){
                 throw new Exception("Unable to commit");
             }else{
                 this.generalBoard.addAnnouncement(this.valueQuartet);
@@ -259,7 +259,7 @@ public class NNRegularRegister implements Serializable {
                     && AsymmetricCrypto.validateDigitalSignature(valueQuartet.getValue3(), clientPublicKey, valueQuartet.getValue1()
                     + valueQuartet.getValue0() + valueQuartet.getValue2()) && this.expectedResponses.contains(serverPublicKey)) {
 
-                if(this.valueQuartet != null && this.valueQuartet.getValue0() == valueQuartet.getValue0()
+                if(this.valueQuartet != null && this.valueQuartet.getValue0().intValue() == valueQuartet.getValue0().intValue()
                         && this.valueQuartet.getValue1().equals(valueQuartet.getValue1())
                         && this.valueQuartet.getValue2().equals(valueQuartet.getValue2())
                         && (new String(this.valueQuartet.getValue3(), "UTF-8")).equals(new String(valueQuartet.getValue3(), "UTF-8"))) {
@@ -273,7 +273,7 @@ public class NNRegularRegister implements Serializable {
                     }
                 }
 
-            } else if(valueQuartet == null && AsymmetricCrypto.validateDigitalSignature(sSSignature,serverPublicKey,"abort")
+            } else if(AsymmetricCrypto.validateDigitalSignature(sSSignature,serverPublicKey,"abort")
                     && this.expectedResponses.contains(serverPublicKey)){
 
                 if(true){
