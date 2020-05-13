@@ -2,20 +2,20 @@
 Projeto de SEC
 
 
-How to execute our project (intermidiate version)
+How to execute our project (final version)
 
 1 - Open a terminal at project's base directory
   
   -> mvn clean install
 
-2 - Open a terminal for server in {basedir}/Server
-  
+2 - Open a terminal N for server N in {basedir}/Server
   -> mvn spring-boot:run
+  \\\ It will ask to insert all other server ports
+  -> 8000,8001,...,N
+  \\\ It will then ask you to insert your server port
+  -> 8XXX
+  \\\ Then when all servers you want to start are at this stage press enter 
   
-  \\\ It will ask to insert the server id
- 
-  -> 1 \\\ 1 is server id in this version is only one
-
 3 - Open terminal(s) for clients in {basedir}/Client
   
   -> mvn spring-boot:run
@@ -55,12 +55,3 @@ Extra:
     3 - generate keystore from pkcs12 file
     
     -> keytool -importkeystore -srckeystore clientX_pkcs12.p12 -srcstoretype pkcs12 -destkeystore clientX_keystore.jks -deststoretype JKS
-
--------------------------------------------------------------------------------------------------------------------------------
-DISCUSSÃO COM O PROFESSOR:
-
-// FEITO em vez de guardar o estado do cliente com o sequence number, pedir o sequence number ao servidor antes de se juntar.
-
-O que acontece se o servidor crasha no meio da escrita, ver isso.
-
-RELATÓRIO: esquecer a introdução, o indice e a API; emfase nos ataques que evitamos e como.
