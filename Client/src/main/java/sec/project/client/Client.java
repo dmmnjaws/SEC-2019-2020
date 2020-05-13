@@ -43,8 +43,21 @@ public class Client {
     public Client (Map<Integer, ClientAPI> stubs) {
 
         this.scanner = new Scanner(System.in);
-        System.out.println("\nInsert the client number:");
-        this.clientNumber = scanner.nextLine();
+
+        while(true){
+
+            try{
+                System.out.println("\nInsert the client number:");
+                this.clientNumber = scanner.nextLine();
+                Integer.valueOf(this.clientNumber);
+            } catch (Exception e){
+                System.out.println("\n-------------------------------------------------------------\n" + "That's not a valid format for a client's number. Please try again.");
+                continue;
+            }
+            break;
+
+        }
+
 
         while (true){
             System.out.println("\nInsert your KeyStore's password:");
@@ -145,7 +158,7 @@ public class Client {
                         if((seconds > 1000 || this.numberOfAborts.get() > this.serverPublicKeys.size() / 3)) {
                             System.out.println("\nUnable to register.");
                         } else {
-                            System.out.println("\nSuccessful registration.");
+                            System.out.println("\nSuccessfully registered!");
                         }
 
                         this.isRegistering = false;
@@ -153,15 +166,32 @@ public class Client {
 
                     case "post":
 
-                        System.out.println("\nWrite your announcement:");
-                        message = scanner.nextLine() + "| ";
-                        if (message.length() > 255) {
-                            System.out.println("\nMessage is too long! Failed post.");
+                        while(true){
+                            System.out.println("\nWrite your announcement:");
+                            message = scanner.nextLine() + "| ";
+                            if (message.length() > 255) {
+                                System.out.println("\nMessage is too long! Please, try again.");
+                                continue;
+                            }
                             break;
                         }
 
-                        System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
-                        message += scanner.nextLine();
+                        while(true){
+                            System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
+                            String refs = scanner.nextLine();
+                            String refsAux = " " + refs;
+                            try{
+                                String [] ref = refsAux.split(" ");
+                                for(int i=1; i<ref.length; i++){
+                                    Integer.valueOf(ref[i]);
+                                }
+                            } catch (Exception e){
+                                System.out.println("\nThat's not a valid format for the references. Please try again.");
+                                continue;
+                            }
+                            message += refs;
+                            break;
+                        }
 
                         this.exception = false;
 
@@ -201,15 +231,32 @@ public class Client {
 
                     case "postGeneral":
 
-                        System.out.println("\nWrite your announcement:");
-                        message = scanner.nextLine() + "| ";
-                        if (message.length() > 255) {
-                            System.out.println("\nMessage is too long! Failed post.");
+                        while(true){
+                            System.out.println("\nWrite your announcement:");
+                            message = scanner.nextLine() + "| ";
+                            if (message.length() > 255) {
+                                System.out.println("\nMessage is too long! Failed post.");
+                                continue;
+                            }
                             break;
                         }
 
-                        System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
-                        message += scanner.nextLine();
+                        while(true){
+                            System.out.println("\nAny references? Insert like id1 id2 id3. If none just press enter.");
+                            String refs = scanner.nextLine();
+                            String refsAux = " " + refs;
+                            try{
+                                String [] ref = refsAux.split(" ");
+                                for(int i=1; i<ref.length; i++){
+                                    Integer.valueOf(ref[i]);
+                                }
+                            } catch (Exception e){
+                                System.out.println("\nThat's not a valid format for the references. Please try again.");
+                                continue;
+                            }
+                            message += refs;
+                            break;
+                        }
 
                         this.exception = false;
 
@@ -253,18 +300,35 @@ public class Client {
 
                         PublicKey toReadClientPublicKey = null;
 
-                        try{
-
-                            System.out.println("\nWrite the number of the client whose announcement board you want to read:");
-                            toReadClientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + scanner.nextLine() + "_certificate.crt");
-
-                        } catch (FileNotFoundException e){
-                            System.out.println("\nThe client you indicated does not exist.");
+                        while(true){
+                            try{
+                                System.out.println("\nWrite the number of the client whose announcement board you want to read:");
+                                String toReadClientNumber = scanner.nextLine();
+                                Integer.valueOf(toReadClientNumber);
+                                toReadClientPublicKey = AsymmetricCrypto.getPublicKeyFromCert("data/keys/client" + toReadClientNumber + "_certificate.crt");
+                            } catch (NumberFormatException e){
+                                System.out.println("\nThat's not a valid format for a client's number. Please try again.");
+                                continue;
+                            } catch (FileNotFoundException e) {
+                                System.out.println("\nThe client you indicated does not exist. Please try again.");
+                                continue;
+                            }
                             break;
                         }
 
-                        System.out.println("\nHow many announcements do you want to see?");
-                        numberOfAnnouncements = scanner.nextLine();
+
+                        while(true){
+                            System.out.println("\nHow many announcements do you want to see?");
+                            numberOfAnnouncements = scanner.nextLine();
+                            try{
+                                Integer.valueOf(numberOfAnnouncements);
+                            } catch (Exception e){
+                                System.out.println("\nThat's not a valid number. Please try again.");
+                                continue;
+                            }
+                            break;
+                        }
+
 
                         this.exception = false;
 
@@ -384,8 +448,17 @@ public class Client {
 
                     case "readGeneral":
 
-                        System.out.println("\nHow many announcements do you want to see?");
-                        numberOfAnnouncements = scanner.nextLine();
+                        while(true){
+                            System.out.println("\nHow many announcements do you want to see?");
+                            numberOfAnnouncements = scanner.nextLine();
+                            try{
+                                Integer.valueOf(numberOfAnnouncements);
+                            } catch (Exception e){
+                                System.out.println("\nThat's not a valid number. Please try again.");
+                                continue;
+                            }
+                            break;
+                        }
 
                         this.exception = false;
 
