@@ -7,14 +7,22 @@ How to execute our project (final version)
 1 - Open a terminal at project's base directory
   
   -> mvn clean install
+  
 
 2 - Open a terminal N for server N in {basedir}/Server
+
   -> mvn spring-boot:run
+  
   \\\ It will ask to insert all other server ports
+  
   -> 8000,8001,...,N
+  
   \\\ It will then ask you to insert your server port
+  
   -> 8XXX
+  
   \\\ Then when all servers you want to start are at this stage press enter 
+  
   
 3 - Open terminal(s) for clients in {basedir}/Client
   
@@ -37,6 +45,7 @@ How to execute our project (final version)
   -> register/post/read/postGeneral/readGeneral
   
   \\\ Then follow the instructions to complete the commands
+  
 
 Extra:
 
