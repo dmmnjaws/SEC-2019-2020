@@ -221,6 +221,8 @@ public class NNRegularRegister implements Serializable {
 
                 for (Map.Entry<PublicKey, ClientAPI> entry : stubs.entrySet()) {
 
+                    System.out.println("\n\nDEBUG: " + entry.getValue());
+
                     AsyncReadyToCommit readyToCommit = new AsyncReadyToCommit(entry.getValue(), clientPublicKey, valueQuartet,
                             sSSignature, serverPublicKey);
                     new Thread(readyToCommit).start();

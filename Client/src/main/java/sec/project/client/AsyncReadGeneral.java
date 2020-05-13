@@ -18,6 +18,7 @@ public class AsyncReadGeneral implements Runnable {
     private Client client;
     private int numberOfAnnouncements;
     private byte[] signature;
+    private int ridGeneral;
 
     //Runnable(this, toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), signature)
 
@@ -26,18 +27,19 @@ public class AsyncReadGeneral implements Runnable {
         this.signature = signature;
         this.stub = stub;
         this.numberOfAnnouncements = numberOfAnnouncements;
+        this.ridGeneral = this.client.getReadGeneralRid();
+
     }
 
     @Override
     public void run() {
-        int ridGeneral = this.client.getReadGeneralRid();
 
         try {
 
-            ReadView readGeneralResponse = this.stub.getValue().readGeneral(numberOfAnnouncements, ridGeneral, signature, this.client.getClientPublicKey());
+            ReadView readGeneralResponse = this.stub.getValue().readGeneral(numberOfAnnouncements, this.ridGeneral, signature, this.client.getClientPublicKey());
 
             if(AsymmetricCrypto.validateDigitalSignature(readGeneralResponse.getSignature(), this.stub.getKey(),
-                    AsymmetricCrypto.transformQuintetToString(readGeneralResponse.getAnnouncesGeneral()) + readGeneralResponse.getRid()) && ridGeneral == readGeneralResponse.getRid()){
+                    AsymmetricCrypto.transformQuintetToString(readGeneralResponse.getAnnouncesGeneral()) + readGeneralResponse.getRid()) && this.ridGeneral == readGeneralResponse.getRid()){
 
                 boolean valid = true;
                 for(Quintet<Integer, String, String, byte[], ArrayList<Integer>> announce : readGeneralResponse.getAnnouncesGeneral()){
@@ -51,8 +53,10 @@ public class AsyncReadGeneral implements Runnable {
                 }
 
                 if(valid){
-                    this.client.getReadGeneralResponses().put(this.stub.getKey(), readGeneralResponse);
-                    this.client.incrementNumberOfReadGeneralResponses();
+                    if(this.ridGeneral == this.client.getReadGeneralRid()){
+                        this.client.getReadGeneralResponses().put(this.stub.getKey(), readGeneralResponse);
+                        this.client.incrementNumberOfAcks();
+                    }
                 }
 
             }else{
@@ -61,10 +65,13 @@ public class AsyncReadGeneral implements Runnable {
 
 
         } catch (RemoteException e1){
-            System.out.println("\n" + e1.getMessage());
-            this.client.getReadGeneralResponses().put(this.stub.getKey(), null);
-            this.client.incrementNumberOfReadGeneralResponses();
-            this.client.setException(true);
+            if (this.ridGeneral == this.client.getReadGeneralRid()){
+                System.out.println("\n" + e1.getMessage());
+                this.client.getReadGeneralResponses().put(this.stub.getKey(), null);
+                this.client.incrementNumberOfAborts();
+                this.client.setException(true);
+
+            }
             return;
 
         } catch (Exception e2){

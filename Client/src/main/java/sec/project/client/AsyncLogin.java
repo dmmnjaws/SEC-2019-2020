@@ -24,16 +24,20 @@ public class AsyncLogin implements Runnable {
         try{
 
             Acknowledge response = this.stub.getValue().login(this.client.getClientPublicKey());
-            if (AsymmetricCrypto.validateDigitalSignature(response.getSignature(), this.stub.getKey(), response.getMessage())){
+            if (AsymmetricCrypto.validateDigitalSignature(response.getSignature(), this.stub.getKey(), response.getMessage()) && this.client.isLogging){
                 this.client.getLoginResponses().put(stub.getKey(), response.getMessage());
-                this.client.incrementNumberOfLoginResponses();
+                this.client.incrementNumberOfAcks();
             }
 
         } catch (RemoteException e1) {
-            System.out.println("\n" + e1.getMessage());
-            this.client.getLoginResponses().put(this.stub.getKey(), null);
-            this.client.incrementNumberOfLoginResponses();
-            this.client.setException(true);
+
+            if(this.client.isLogging){
+                System.out.println("\n" + e1.getMessage());
+                this.client.getLoginResponses().put(this.stub.getKey(), null);
+                this.client.incrementNumberOfAborts();
+                this.client.setException(true);
+            }
+
             return;
 
         } catch (Exception e){

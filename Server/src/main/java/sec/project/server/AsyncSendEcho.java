@@ -10,14 +10,14 @@ import java.util.Map;
 
 public class AsyncSendEcho implements Runnable {
 
-    private Map.Entry<PublicKey, ClientAPI> stub;
+    private ClientAPI stub;
     private PublicKey clientPublicKey;
     private Triplet<Integer, String, byte[]> message;
     private byte[] signature;
     private PublicKey senderServerPublicKey;
     private boolean isReady;
 
-    public AsyncSendEcho(Map.Entry<PublicKey, ClientAPI> stub, PublicKey clientPublicKey, Triplet<Integer, String, byte[]> message, byte[] signature, PublicKey senderServerPublicKey, boolean isReady){
+    public AsyncSendEcho(ClientAPI stub, PublicKey clientPublicKey, Triplet<Integer, String, byte[]> message, byte[] signature, PublicKey senderServerPublicKey, boolean isReady){
         this.stub = stub;
         this.clientPublicKey = clientPublicKey;
         this.message = message;
@@ -31,9 +31,9 @@ public class AsyncSendEcho implements Runnable {
 
         try {
             if(isReady){
-                stub.getValue().ready(this.clientPublicKey, this.message, this.signature, this.senderServerPublicKey);
+                stub.ready(this.clientPublicKey, this.message, this.signature, this.senderServerPublicKey);
             } else {
-                stub.getValue().echo(this.clientPublicKey, this.message, this.signature, this.senderServerPublicKey);
+                stub.echo(this.clientPublicKey, this.message, this.signature, this.senderServerPublicKey);
             }
         } catch (RemoteException e){
             e.printStackTrace();

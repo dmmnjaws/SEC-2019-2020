@@ -68,7 +68,7 @@ public class ServerTest
             e.printStackTrace();
         }
 
-        ack = server.post(this.clientPublicKey, testString, 1, testBytes);
+        ack = server.post(this.clientPublicKey, testString, 1, testBytes, false);
 
 
     }
@@ -193,7 +193,7 @@ public class ServerTest
         testBytes = AsymmetricCrypto.wrapDigitalSignature("1", this.clientPrivatekey);
         server.register(this.clientPublicKey, "1", testBytes);
         testBytes = AsymmetricCrypto.wrapDigitalSignature(testString + "1", this.clientPrivatekey);
-        ack = server.post(this.clientPublicKey, testString, 1, testBytes);
+        ack = server.post(this.clientPublicKey, testString, 1, testBytes, false);
         testBytes = AsymmetricCrypto.wrapDigitalSignature(this.clientPublicKey.toString() + "1" + "1", this.clientPrivatekey);
         readView = server.read(this.clientPublicKey,1,1, testBytes,this.clientPublicKey);
         assertEquals(testString, readView.getAnnounces().get(0).getValue1());

@@ -30,15 +30,21 @@ public class AsyncPostGeneral implements Runnable {
             Acknowledge acknowledge = this.stub.getValue().postGeneral(this.client.getClientPublicKey(), message, this.postGeneralWts, signature, null, null);
 
             if (acknowledge.getWts() == this.postGeneralWts){
-                this.client.getPostGeneralAcks().put(this.stub.getKey(), acknowledge);
-                this.client.incrementNumberOfPostGeneralAcks();
+                if(this.postGeneralWts == this.client.getPostGeneralWts()){
+                    this.client.getPostGeneralAcks().put(this.stub.getKey(), acknowledge);
+                    this.client.incrementNumberOfAcks();
+                }
             }
 
         } catch (RemoteException e1) {
-            System.out.println("\n" + e1.getMessage());
-            this.client.getPostGeneralAcks().put(this.stub.getKey(), null);
-            this.client.incrementNumberOfPostGeneralAcks();
-            this.client.setException(true);
+            if(this.postGeneralWts == this.client.getPostGeneralWts()){
+                System.out.println("\n" + e1.getMessage());
+                this.client.getPostGeneralAcks().put(this.stub.getKey(), null);
+                this.client.setException(true);
+                this.client.incrementNumberOfAborts();
+
+            }
+
             return;
 
         }

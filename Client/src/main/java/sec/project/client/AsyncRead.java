@@ -20,6 +20,7 @@ public class AsyncRead implements Runnable {
     private PublicKey toReadClientPublicKey;
     private int numberOfAnnouncements;
     private byte[] signature;
+    private int rid;
 
     //Runnable(this, toReadClientPublicKey, Integer.parseInt(numberOfAnnouncements), signature)
 
@@ -29,20 +30,20 @@ public class AsyncRead implements Runnable {
         this.signature = signature;
         this.stub = stub;
         this.numberOfAnnouncements = numberOfAnnouncements;
+        this.rid = this.client.getReadRid();
     }
 
     @Override
     public void run() {
-        int rid = this.client.getReadRid();
 
         try {
 
             ReadView readResponse = this.stub.getValue().read(this.toReadClientPublicKey, this.numberOfAnnouncements,
-                    rid, this.signature, this.client.getClientPublicKey());
+                    this.rid, this.signature, this.client.getClientPublicKey());
 
             if (AsymmetricCrypto.validateDigitalSignature(readResponse.getSignature(), this.stub.getKey(),
                     AsymmetricCrypto.transformQuartetToString(readResponse.getAnnounces()) + readResponse.getRid())
-                    && rid == readResponse.getRid()) {
+                    && this.rid == readResponse.getRid()) {
 
                 boolean valid = true;
                 for (Quartet<Integer, String, byte[], ArrayList<Integer>> announce : readResponse.getAnnounces()) {
@@ -53,8 +54,10 @@ public class AsyncRead implements Runnable {
                 }
 
                 if (valid) {
-                    this.client.getReadResponses().put(this.stub.getKey(), readResponse);
-                    this.client.incrementNumberOfReadResponses();
+                    if(this.rid == this.client.getReadRid()){
+                        this.client.getReadResponses().put(this.stub.getKey(), readResponse);
+                        this.client.incrementNumberOfAcks();
+                    }
                 }
 
             } else {
@@ -62,10 +65,14 @@ public class AsyncRead implements Runnable {
             }
 
         } catch (RemoteException e1){
-            System.out.println("\n" + e1.getMessage());
-            this.client.getReadResponses().put(this.stub.getKey(), null);
-            this.client.incrementNumberOfReadResponses();
-            this.client.setException(true);
+            if(this.rid == this.client.getReadRid()) {
+                System.out.println("\n" + e1.getMessage());
+                this.client.getReadResponses().put(this.stub.getKey(), null);
+                this.client.incrementNumberOfAborts();
+                this.client.setException(true);
+
+            }
+
             return;
 
         } catch (Exception e2){

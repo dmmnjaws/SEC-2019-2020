@@ -135,7 +135,7 @@ public class Server implements ClientAPI {
             if(AsymmetricCrypto.validateDigitalSignature(signature, clientPublicKey, clientNumber)
                     & this.clientList.get(clientPublicKey)==null) {
 
-                this.clientList.put(clientPublicKey, new ClientLibrary(clientNumber, clientPublicKey, this.stubs, this.serverPublicKey, this.serverPrivateKey));
+                this.clientList.put(clientPublicKey, new ClientLibrary(clientNumber, clientPublicKey, this.serverPublicKey, this.serverPrivateKey));
                 System.out.println("\nRegistered client" + clientNumber + " with Public key: \n\n" + clientPublicKey);
 
             }else{
@@ -152,7 +152,7 @@ public class Server implements ClientAPI {
     }
 
     @Override
-    public Acknowledge post(PublicKey clientPublicKey, String message, int wts, byte [] signature) throws RemoteException {
+    public Acknowledge post(PublicKey clientPublicKey, String message, int wts, byte [] signature, boolean isWriteBack) throws RemoteException {
 
         try {
             try {
@@ -162,10 +162,14 @@ public class Server implements ClientAPI {
                 throw new RemoteException("\nThe server registered in port " + this.serverPort + " reports that you are not registered yet. \nIf you're unsure if this is right, please type the 'register' command.");
             }
 
-            String ack = this.clientList.get(clientPublicKey).write(wts, message, signature);
+            String ack = this.clientList.get(clientPublicKey).write(wts, message, signature, this.stubs);
 
             if (ack.equals("BADSIGNATURE") || ack.equals("BADBROADCAST")){
                 throw new RemoteException("\nSomething went wrong in the server registered in port " + this.serverPort + "... (" + ack + ")");
+            }
+
+            if (ack.equals("IGNORED") && !isWriteBack){
+                throw new RemoteException("\nThe server registered in port " + this.serverPort + " reports that you are registered but not logged in. \nIf you're unsure if this is right, please type the 'login' command.");
             }
 
             saveState();

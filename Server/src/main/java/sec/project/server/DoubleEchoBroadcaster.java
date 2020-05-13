@@ -33,9 +33,11 @@ public class DoubleEchoBroadcaster implements Serializable {
     private Map<PublicKey, Triplet<Integer, String, byte[]>> readys;
     private Map<Pair<Integer, String>, Integer> readyMessagesCount;
     private Triplet<Integer, String, byte[]> readyedMessage;
+    private Map<PublicKey, ClientAPI> stubs;
 
-    public DoubleEchoBroadcaster(ClientLibrary clientLibrary){
+    public DoubleEchoBroadcaster(ClientLibrary clientLibrary, Map<PublicKey, ClientAPI> stubs){
         this.clientLibrary = clientLibrary;
+        this.stubs = stubs;
     }
 
     public Triplet<Integer, String, byte[]> write(Triplet <Integer, String, byte[]> valueTriplet, PrivateKey serverPrivateKey, PublicKey serverPublicKey) throws UnsupportedEncodingException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, RemoteException, InterruptedException {
@@ -58,11 +60,10 @@ public class DoubleEchoBroadcaster implements Serializable {
             this.sentEcho = true;
 
             //echo to myself
-            echo(this.clientLibrary.getClientPublicKey(), valueTriplet, AsymmetricCrypto.wrapDigitalSignature(
-                    this.clientLibrary.getClientPublicKey() + AsymmetricCrypto.transformTripletToString(valueTriplet), this.serverPrivateKey), this.serverPublicKey);
+            echo(this.clientLibrary.getClientPublicKey(), valueTriplet, AsymmetricCrypto.wrapDigitalSignature( this.clientLibrary.getClientPublicKey() + AsymmetricCrypto.transformTripletToString(valueTriplet), this.serverPrivateKey), this.serverPublicKey);
 
-            for (Map.Entry<PublicKey, ClientAPI> stub : this.clientLibrary.getStubs().entrySet()){
-                AsyncSendEcho asyncSendEcho = new AsyncSendEcho(stub, this.clientLibrary.getClientPublicKey(), valueTriplet, AsymmetricCrypto.wrapDigitalSignature(
+            for (Map.Entry<PublicKey, ClientAPI> stub : this.stubs.entrySet()){
+                AsyncSendEcho asyncSendEcho = new AsyncSendEcho(stub.getValue(), this.clientLibrary.getClientPublicKey(), valueTriplet, AsymmetricCrypto.wrapDigitalSignature(
                         this.clientLibrary.getClientPublicKey() + AsymmetricCrypto.transformTripletToString(valueTriplet), this.serverPrivateKey), this.serverPublicKey, false);
                 new Thread(asyncSendEcho).start();
             }
@@ -75,6 +76,7 @@ public class DoubleEchoBroadcaster implements Serializable {
             Thread.sleep(100);
             seconds++;
             if (seconds > 100) {
+                System.out.println("TIMEOUT: Could not complete the ADEB algorithm.");
                 return null;
             }
 
@@ -91,7 +93,7 @@ public class DoubleEchoBroadcaster implements Serializable {
     public synchronized void echo(PublicKey clientPublicKey, Triplet<Integer, String, byte[]> message, byte[] signature, PublicKey serverPublicKey) throws UnsupportedEncodingException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, RemoteException {
         System.out.println("DEBUG: Server received ECHO. Args: " + AsymmetricCrypto.transformTripletToString(message));
 
-        if ((this.clientLibrary.getStubs().containsKey(serverPublicKey) || serverPublicKey.equals(this.serverPublicKey)) && AsymmetricCrypto.validateDigitalSignature(signature, serverPublicKey,
+        if ((this.stubs.containsKey(serverPublicKey) || serverPublicKey.equals(this.serverPublicKey)) && AsymmetricCrypto.validateDigitalSignature(signature, serverPublicKey,
                 clientPublicKey + AsymmetricCrypto.transformTripletToString(message)) && this.echoes.get(serverPublicKey) == null) {
 
 
@@ -109,7 +111,7 @@ public class DoubleEchoBroadcaster implements Serializable {
 
             System.out.println("DEBUG: State of the server's ECHO message count: " + this.echoMessagesCount);
 
-            if(this.echoMessagesCount.get(rawMessage) > (this.clientLibrary.getStubs().size() + (this.clientLibrary.getStubs().size() / 3)) / 2 && this.sentReady == false){
+            if(this.echoMessagesCount.get(rawMessage) > (this.stubs.size() + (this.stubs.size() / 3)) / 2 && this.sentReady == false){
 
                 System.out.println("DEBUG: Server initiated sending of READY messages.");
 
@@ -120,11 +122,12 @@ public class DoubleEchoBroadcaster implements Serializable {
                 ready(this.clientLibrary.getClientPublicKey(), message, AsymmetricCrypto.wrapDigitalSignature(
                         this.clientLibrary.getClientPublicKey() + AsymmetricCrypto.transformTripletToString(message), this.serverPrivateKey), this.serverPublicKey);
 
-                for (Map.Entry<PublicKey, ClientAPI> stub : this.clientLibrary.getStubs().entrySet()){
+                for (Map.Entry<PublicKey, ClientAPI> stub : this.stubs.entrySet()){
 
                     System.out.println("DEBUG: Server will send a READY message from ECHO...");
+                    System.out.println("\n\nDEBUG: " + stub.getValue());
 
-                    AsyncSendEcho asyncSendEcho = new AsyncSendEcho(stub, this.clientLibrary.getClientPublicKey(), message, AsymmetricCrypto.wrapDigitalSignature(
+                    AsyncSendEcho asyncSendEcho = new AsyncSendEcho(stub.getValue(), this.clientLibrary.getClientPublicKey(), message, AsymmetricCrypto.wrapDigitalSignature(
                             this.clientLibrary.getClientPublicKey() + AsymmetricCrypto.transformTripletToString(message), this.serverPrivateKey), this.serverPublicKey, true);
                     new Thread(asyncSendEcho).start();
 
@@ -137,7 +140,7 @@ public class DoubleEchoBroadcaster implements Serializable {
     public synchronized void ready(PublicKey clientPublicKey, Triplet<Integer, String, byte[]> message, byte[] signature, PublicKey serverPublicKey) throws UnsupportedEncodingException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, RemoteException {
         System.out.println("DEBUG: Server received READY. Args: " + AsymmetricCrypto.transformTripletToString(message));
 
-        if ((this.clientLibrary.getStubs().containsKey(serverPublicKey) || serverPublicKey.equals(this.serverPublicKey)) && AsymmetricCrypto.validateDigitalSignature(signature, serverPublicKey,
+        if ((this.stubs.containsKey(serverPublicKey) || serverPublicKey.equals(this.serverPublicKey)) && AsymmetricCrypto.validateDigitalSignature(signature, serverPublicKey,
                 clientPublicKey + AsymmetricCrypto.transformTripletToString(message)) && this.readys.get(serverPublicKey) == null) {
 
             System.out.println("DEBUG: Server validated READY signature.");
@@ -154,7 +157,7 @@ public class DoubleEchoBroadcaster implements Serializable {
 
             System.out.println("DEBUG: State of the server's READY message count: " + this.readyMessagesCount);
 
-            if(this.readyMessagesCount.get(rawMessage) > 2 * (this.clientLibrary.getStubs().size() / 3) && this.delivered == false){
+            if(this.readyMessagesCount.get(rawMessage) > 2 * (this.stubs.size() / 3) && this.delivered == false){
 
                 System.out.println("DEBUG: Server is ready to deliver. " + this.readyMessagesCount);
 
@@ -163,14 +166,14 @@ public class DoubleEchoBroadcaster implements Serializable {
                 return;
             }
 
-            if(this.readyMessagesCount.get(rawMessage) > (this.clientLibrary.getStubs().size() / 3) && this.sentReady == false){
+            if(this.readyMessagesCount.get(rawMessage) > (this.stubs.size() / 3) && this.sentReady == false){
 
                 System.out.println("DEBUG: Server initiated amplification step");
 
                 this.sentReady = true;
                 this.readyedMessage = message;
-                for (Map.Entry<PublicKey, ClientAPI> stub : this.clientLibrary.getStubs().entrySet()){
-                    AsyncSendEcho asyncSendEcho = new AsyncSendEcho(stub, this.clientLibrary.getClientPublicKey(), message, AsymmetricCrypto.wrapDigitalSignature(
+                for (Map.Entry<PublicKey, ClientAPI> stub : this.stubs.entrySet()){
+                    AsyncSendEcho asyncSendEcho = new AsyncSendEcho(stub.getValue(), this.clientLibrary.getClientPublicKey(), message, AsymmetricCrypto.wrapDigitalSignature(
                             this.clientLibrary.getClientPublicKey() + AsymmetricCrypto.transformTripletToString(message), this.serverPrivateKey), this.serverPublicKey, true);
                     new Thread(asyncSendEcho).start();
                 }

@@ -30,11 +30,18 @@ public class AsyncRegister implements Runnable {
         try{
 
             this.stub.getValue().register(this.clientPublicKey, this.clientNumber, signature);
-            this.client.incrementNumberOfTRegistersFinished();
+
+            if(this.client.isRegistering){
+                this.client.incrementNumberOfAcks();
+            }
 
         } catch (RemoteException e1) {
-            System.out.println("\n" + e1.getMessage());
-            this.client.incrementNumberOfTRegistersFinished();
+
+            if(this.client.isRegistering){
+                System.out.println("\n" + e1.getMessage());
+                this.client.incrementNumberOfAborts();
+            }
+
             return;
 
         } catch (Exception e){

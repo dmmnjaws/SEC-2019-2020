@@ -26,16 +26,14 @@ public class ClientLibrary implements Serializable {
     private OneNAtomicRegister oneNAtomicRegister;
     private DoubleEchoBroadcaster doubleEchoBroadcaster;
     private PublicKey clientPublicKey;
-    private Map<PublicKey, ClientAPI> stubs;
     private PublicKey serverPublicKey;
     private PrivateKey serverPrivateKey;
 
-    public ClientLibrary(String clientNumber, PublicKey clientPublicKey, Map<PublicKey, ClientAPI> stubs, PublicKey serverPublicKey, PrivateKey serverPrivateKey){
+    public ClientLibrary(String clientNumber, PublicKey clientPublicKey, PublicKey serverPublicKey, PrivateKey serverPrivateKey){
         this.clientNumber = clientNumber;
         this.clientPublicKey = clientPublicKey;
         this.announcements = new HashMap<>();
         this.oneNAtomicRegister = new OneNAtomicRegister(this);
-        this.stubs = stubs;
         this.serverPrivateKey = serverPrivateKey;
         this.serverPublicKey = serverPublicKey;
     }
@@ -84,12 +82,10 @@ public class ClientLibrary implements Serializable {
 
     public DoubleEchoBroadcaster getDoubleEchoBroadcaster() { return this.doubleEchoBroadcaster; }
 
-    public Map<PublicKey, ClientAPI> getStubs() { return this.stubs; }
-
-    public String write(int wts, String message, byte[] signature) throws NoSuchPaddingException,
+    public String write(int wts, String message, byte[] signature, Map<PublicKey, ClientAPI> stubs) throws NoSuchPaddingException,
             UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException, RemoteException, InterruptedException {
 
-        this.doubleEchoBroadcaster = new DoubleEchoBroadcaster(this);
+        this.doubleEchoBroadcaster = new DoubleEchoBroadcaster(this, stubs);
         return this.oneNAtomicRegister.write(wts, message, signature, this.serverPrivateKey, this.serverPublicKey);
     }
 

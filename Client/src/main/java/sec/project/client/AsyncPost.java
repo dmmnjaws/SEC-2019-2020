@@ -26,11 +26,11 @@ public class AsyncPost implements Runnable {
         this.mode = "POST";
     }
 
-    public AsyncPost(Map.Entry<PublicKey, ClientAPI> stub, Client client, int writeBackWts, PublicKey toWriteClientPublicKey, String message, byte[] signature) {
+    public AsyncPost(Map.Entry<PublicKey, ClientAPI> stub, Client client, PublicKey toWriteClientPublicKey, String message, byte[] signature) {
         this.message = message;
         this.signature = signature;
         this.client = client;
-        this.writeBackWts = writeBackWts;
+        this.writeBackWts = this.client.getWriteBackWts();
         this.toWriteClientPublicKey = toWriteClientPublicKey;
         this.stub = stub;
         this.mode = "WRITEBACK";
@@ -41,14 +41,17 @@ public class AsyncPost implements Runnable {
 
         int postWts = 0;
         PublicKey clientPublicKey = null;
+        boolean isWriteBack;
 
         if (mode.equals("POST")) {
             postWts = this.client.getPostWts();
             clientPublicKey = this.client.getClientPublicKey();
+            isWriteBack = false;
 
         } else if (mode.equals("WRITEBACK")) {
             postWts = this.writeBackWts;
             clientPublicKey = this.toWriteClientPublicKey;
+            isWriteBack = true;
 
         } else {
             return;
@@ -57,18 +60,25 @@ public class AsyncPost implements Runnable {
 
         try {
 
-            Acknowledge acknowledge = this.stub.getValue().post(clientPublicKey, message, postWts, signature);
+            Acknowledge acknowledge = this.stub.getValue().post(clientPublicKey, message, postWts, signature, isWriteBack);
 
             if (acknowledge.getWts() == postWts) {
-                this.client.getPostAcks().put(this.stub.getKey(), acknowledge);
-                this.client.incrementNumberOfPostAcks();
+                if((mode.equals("POST") && postWts == this.client.getPostWts()) || ((mode.equals("WRITEBACK") && postWts == this.client.getWriteBackWts()))){
+                    this.client.getPostAcks().put(this.stub.getKey(), acknowledge);
+                    this.client.incrementNumberOfAcks();
+                }
             }
 
+
         } catch (RemoteException e1) {
-            System.out.println("\n" + e1.getMessage());
-            this.client.getPostAcks().put(this.stub.getKey(), null);
-            this.client.incrementNumberOfPostAcks();
-            this.client.setException(true);
+
+            if((mode.equals("POST") && postWts == this.client.getPostWts()) || ((mode.equals("WRITEBACK") && postWts == this.client.getWriteBackWts()))){
+                System.out.println("\n" + e1.getMessage());
+                this.client.getPostAcks().put(this.stub.getKey(), null);
+                this.client.incrementNumberOfAborts();
+                this.client.setException(true);
+            }
+
             return;
 
         }
